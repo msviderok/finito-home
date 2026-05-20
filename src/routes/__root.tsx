@@ -1,12 +1,20 @@
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router';
-import appCss from '../styles.css?url';
+import type { QueryClient } from '@tanstack/react-query';
+import { HeadContent, Scripts, createRootRouteWithContext } from '@tanstack/react-router';
+import type { TRPCOptionsProxy } from '@trpc/tanstack-react-query';
+import type { AppRouter } from '@/lib/trpc.init';
+import appCss from '@/styles.css?url';
 
-export const Route = createRootRoute({
+interface MyRouterContext {
+  queryClient: QueryClient;
+  trpc: TRPCOptionsProxy<AppRouter>;
+}
+
+export const Route = createRootRouteWithContext<MyRouterContext>()({
   head: () => ({
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'TanStack Start Starter' },
+      { title: 'Finito Home Assignment' },
     ],
     links: [{ rel: 'stylesheet', href: appCss }],
   }),

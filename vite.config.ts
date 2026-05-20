@@ -1,16 +1,14 @@
-import { defineConfig } from 'vite-plus';
+import tailwindcss from '@tailwindcss/vite';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import viteReact from '@vitejs/plugin-react';
-import tailwindcss from '@tailwindcss/vite';
 import { nitro } from 'nitro/vite';
-import { tanstackOxlintConfig } from './src/lib/tanstack-eslint-plugin.ts';
+import { defineConfig } from 'vite-plus';
 
 const config = defineConfig({
   staged: {
     '*': 'vp check --fix',
   },
   lint: {
-    ...tanstackOxlintConfig,
     options: {
       typeAware: true,
       typeCheck: true,
@@ -30,7 +28,7 @@ const config = defineConfig({
     sortPackageJson: false,
     ignorePatterns: ['package-lock.json', 'pnpm-lock.yaml', 'yarn.lock'],
   },
-  plugins: [nitro(), tailwindcss(), tanstackStart(), viteReact()],
+  plugins: [nitro(), tailwindcss(), tanstackStart({}), viteReact()],
   resolve: {
     tsconfigPaths: true,
   },

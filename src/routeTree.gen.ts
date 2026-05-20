@@ -10,7 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root';
 import { Route as IndexRouteImport } from './routes/index';
-import { Route as ApiTrpcSplatRouteImport } from './routes/api/trpc/$';
+import { Route as ApiTrpcSplatRouteImport } from './routes/api.trpc.$';
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
