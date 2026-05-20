@@ -1,10 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createRouter as createTanStackRouter } from '@tanstack/react-router';
-import { createTRPCClient, httpBatchStreamLink } from '@trpc/client';
+import { createTRPCClient, httpBatchLink } from '@trpc/client';
 import { createTRPCOptionsProxy } from '@trpc/tanstack-react-query';
 import superjson from 'superjson';
-import type { AppRouter } from '@/lib/trpc.init';
+import type { AppRouter } from '@/lib/trpc';
 import { routeTree } from './routeTree.gen';
+import { env } from '@/env';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -13,18 +14,13 @@ const queryClient = new QueryClient({
   },
 });
 
-function getTRPCUrl() {
-  if (typeof window !== 'undefined') return '';
-  return `http://localhost:${process.env.PORT ?? 3000}/api/trpc`;
-}
-
 export const trpc = createTRPCOptionsProxy<AppRouter>({
   queryClient,
   client: createTRPCClient({
     links: [
-      httpBatchStreamLink({
+      httpBatchLink({
         transformer: superjson,
-        url: getTRPCUrl(),
+        url: `http://localhost:${env.PORT}/api/trpc`,
       }),
     ],
   }),
