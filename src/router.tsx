@@ -8,6 +8,16 @@ import type { AppRouter } from '@/lib/trpc';
 import { routeTree } from './routeTree.gen';
 import { env } from '@/env';
 
+function getTrpcUrl() {
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}/api/trpc`;
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}/api/trpc`;
+  }
+  return `http://127.0.0.1:${env.PORT}/api/trpc`;
+}
+
 function isTRPCClientError(error: unknown): error is TRPCClientError<AppRouter> {
   return error instanceof TRPCClientError;
 }
@@ -39,7 +49,7 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
     links: [
       httpBatchLink({
         transformer: superjson,
-        url: `http://localhost:${env.PORT}/api/trpc`,
+        url: getTrpcUrl(),
       }),
     ],
   }),
