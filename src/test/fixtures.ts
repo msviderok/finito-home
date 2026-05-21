@@ -10,7 +10,6 @@ export function createCategoryRate(overrides: Partial<CategoryRate> = {}): Categ
     paymentCategoryId: 1,
     effectiveFrom: new Date('2026-01-01T00:00:00'),
     createdAt: new Date('2026-01-01T00:00:00'),
-    previousRateId: null,
     paymentCategory,
     amount: 25,
     ...overrides,
@@ -18,7 +17,7 @@ export function createCategoryRate(overrides: Partial<CategoryRate> = {}): Categ
 }
 
 export const hourlyCategoryRates: CategoryRate[] = [
-  createCategoryRate({ previousRateId: 2 }),
+  createCategoryRate(),
   createCategoryRate({
     id: 2,
     amountCents: 3_000,

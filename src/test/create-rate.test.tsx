@@ -28,7 +28,6 @@ describe('create rate', () => {
       employeeId: 1,
       paymentCategoryId: 1,
       effectiveFrom: startOfMonth(new Date('2026-06-01T00:00:00')),
-      previousRateId: 1,
     });
   });
 

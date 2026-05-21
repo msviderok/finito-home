@@ -236,7 +236,6 @@ export const appRouter = t.router({
             amountCents: Math.round(input.amount * 100),
             effectiveFrom: input.effectiveFrom,
             createdAt: new Date(),
-            previousRateId: input.previousRateId ?? null,
           })
           .returning();
 

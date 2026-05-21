@@ -33,7 +33,6 @@ export function InlineRateEditor(props: {
       amountCents: formatRateAmount(props.currentRate.amountCents / 100),
       employeeId: props.employeeId,
       paymentCategoryId: props.currentRate.paymentCategoryId,
-      previousRateId: props.currentRate.id,
     },
     validate: 'input',
     revalidate: 'input',

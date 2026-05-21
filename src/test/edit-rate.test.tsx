@@ -35,7 +35,6 @@ describe('edit rate', () => {
       employeeId: 1,
       paymentCategoryId: 1,
       effectiveFrom: startOfMonth(new Date('2026-03-01T00:00:00')),
-      previousRateId: currentRate.id,
     });
     expect(screen.getByText('Current')).toBeTruthy();
     expect(screen.getByText(previousRate.effectiveFrom.toLocaleDateString())).toBeTruthy();
