@@ -18,7 +18,7 @@ export default function Layout(props: { children: React.ReactNode }) {
             </div>
           </div>
         </div>
-        <div className="container mx-auto p-4 pt-20">{props.children}</div>
+        <div className="container mx-auto max-w-screen-sm p-4 pt-20">{props.children}</div>
         <Toaster />
       </TooltipProvider>
     </ViewAsOfProvider>

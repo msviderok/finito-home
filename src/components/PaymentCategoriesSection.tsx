@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { CreateRateHandler } from './InlineRateEditor';
 import { InlineRateEditor } from './InlineRateEditor';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
-import { Badge } from './ui/badge';
+import { Separator } from './ui/separator';
 
 export function PaymentCategoriesSection(props: { employeeId: number; onCreateRate: CreateRateHandler }) {
   const { viewAsOfAt } = useViewAsOf();
@@ -19,7 +19,6 @@ export function PaymentCategoriesSection(props: { employeeId: number; onCreateRa
     <section className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-sm font-semibold">Payment categories</h2>
-        <Badge variant="outline">{categoryGroups.length} current</Badge>
       </div>
       <Accordion multiple>
         {categoryGroups.map((group) => (
@@ -42,11 +41,9 @@ export function PaymentCategoryAccordionItem(props: {
 }) {
   return (
     <AccordionItem value={`category-${props.group.paymentCategoryId}`}>
-      <AccordionTrigger className="flex items-center">
-        <span className="flex items-center gap-2">
-          <span className="font-medium">{props.group.paymentCategory.name}</span>
-          <Badge>Current</Badge>
-        </span>
+      <AccordionTrigger className="flex items-center gap-2">
+        <span className="font-medium">{props.group.paymentCategory.name}</span>
+        <Separator orientation="vertical" className="h-4" />
         <span className="text-muted-foreground tabular-nums">{formatCurrency(props.group.currentRate.amount)}</span>
       </AccordionTrigger>
       <AccordionContent>

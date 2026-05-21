@@ -2,15 +2,14 @@ import type { inferRouterOutputs } from '@trpc/server';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import type { PayslipCreateMutationInput } from '@/db/schema/payslips';
-import { useViewAsOf } from '@/contexts/ViewAsOfProvider';
-import { groupCategoryRates } from '@/lib/category-rates';
 import type { AppRouter } from '@/lib/trpc';
 import { trpc } from '@/router';
 import type { CreateRateHandler } from './InlineRateEditor';
 import { PaymentCategoriesSection } from './PaymentCategoriesSection';
 import { PayslipsSection } from './PayslipsSection';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
-import { Badge } from './ui/badge';
+import { Separator } from './ui/separator';
+import { format } from 'date-fns';
 
 type RouterOutputs = inferRouterOutputs<AppRouter>;
 
@@ -50,28 +49,22 @@ export function EmployeeAccordionItem(props: {
   onCreatePayslip: CreatePayslipHandler;
 }) {
   const { data: employee } = useQuery(trpc.employees.get.queryOptions({ id: props.employeeId }));
-  const { viewAsOfAt } = useViewAsOf();
-  const { data: categoryRates = [] } = useQuery(
-    trpc.paymentCategories.forEmployee.queryOptions({ employeeId: props.employeeId, effectiveDate: viewAsOfAt }),
-  );
-  const { data: payslips = [] } = useQuery(trpc.employees.payslips.list.queryOptions({ employeeId: props.employeeId }));
-  const categoryGroups = groupCategoryRates(categoryRates, viewAsOfAt);
 
   if (!employee) return null;
 
   return (
     <AccordionItem value={props.employeeId}>
-      <AccordionTrigger className="items-center">
+      <AccordionTrigger className="flex items-center gap-3">
         <span className="text-sm font-semibold">{employee.name}</span>
-        <span className="ml-auto flex flex-wrap items-center justify-end gap-1.5 text-muted-foreground">
-          <Badge variant="outline">{categoryGroups.length} categories</Badge>
-          <Badge variant="outline">{payslips.length} pay slips</Badge>
-          <Badge variant="outline">{employee.age} years</Badge>
-        </span>
+        <Separator orientation="vertical" className="h-full" />
+        <p className="flex flex-wrap items-center justify-end gap-1.5 text-muted-foreground italic">
+          <span>{format(employee.birthday, 'MMM yyyy')}</span>
+          <span>({employee.age} years)</span>
+        </p>
       </AccordionTrigger>
-      <AccordionContent className="flex flex-col gap-5">
-        <EmployeeDetails employeeId={props.employeeId} />
+      <AccordionContent className="flex flex-col gap-10 px-0.5 py-4">
         <PaymentCategoriesSection employeeId={props.employeeId} onCreateRate={props.onCreateRate} />
+        <Separator />
         <PayslipsSection employeeId={props.employeeId} onCreatePayslip={props.onCreatePayslip} />
       </AccordionContent>
     </AccordionItem>

@@ -5,6 +5,9 @@ import { selectComboboxOption, getHoursInputForCategory } from './combobox';
 import { categoryRatesByEmployee } from './mock-trpc-store';
 import { payslipCategoryRates } from './fixtures';
 import { renderPayslipsSection } from './render';
+import { viewAsOfInstant } from '@/lib/view-as-of-date';
+
+const may2026ViewAsOfAt = viewAsOfInstant(new Date('2026-05-01'));
 
 describe('create payslip', () => {
   const onCreatePayslip = vi.fn();
@@ -14,30 +17,25 @@ describe('create payslip', () => {
     categoryRatesByEmployee.set(1, payslipCategoryRates);
   });
 
-  it('creates a payslip with payment date and line items', async () => {
+  it('creates a payslip with view-as-of payment date and line items', async () => {
     await renderPayslipsSection(<PayslipsSection employeeId={1} onCreatePayslip={onCreatePayslip} />, {
       employeeId: 1,
       rates: payslipCategoryRates,
+      initialViewAsOfMonth: new Date('2026-05-01'),
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Add payslip' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Create Payslip' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Add payment' }));
 
-    await waitFor(() => expect(screen.getByLabelText(/^Payment date$/i)).toBeTruthy());
-    await waitFor(() => {
-      expect((screen.getByPlaceholderText('Add payment category') as HTMLInputElement).disabled).toBe(false);
-    });
-
-    fireEvent.change(screen.getByLabelText(/^Payment date$/i), { target: { value: '2026-05-10' } });
-
-    await selectComboboxOption('Add payment category', 'Hourly Rate');
+    await selectComboboxOption('Select category', 'Hourly Rate');
 
     fireEvent.change(getHoursInputForCategory('Hourly Rate'), { target: { value: '8' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Create payslip' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => expect(onCreatePayslip).toHaveBeenCalledOnce());
     expect(onCreatePayslip).toHaveBeenCalledWith({
       employeeId: 1,
-      paymentDate: new Date('2026-05-10T00:00:00'),
+      paymentDate: may2026ViewAsOfAt,
       lineItems: [
         {
           paymentCategoryId: 1,
@@ -45,7 +43,7 @@ describe('create payslip', () => {
         },
       ],
     });
-    await waitFor(() => expect(screen.queryByRole('button', { name: 'Create payslip' })).toBeNull());
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Save' })).toBeNull());
   });
 
   it('adds multiple categories before submit', async () => {
@@ -54,17 +52,15 @@ describe('create payslip', () => {
       rates: payslipCategoryRates,
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Add payslip' }));
-    await waitFor(() => {
-      expect((screen.getByPlaceholderText('Add payment category') as HTMLInputElement).disabled).toBe(false);
-    });
-
-    await selectComboboxOption('Add payment category', 'Hourly Rate');
+    fireEvent.click(screen.getByRole('button', { name: 'Create Payslip' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Add payment' }));
+    await selectComboboxOption('Select category', 'Hourly Rate');
     fireEvent.change(getHoursInputForCategory('Hourly Rate'), { target: { value: '6' } });
-    await selectComboboxOption('Add payment category', 'Overtime Hourly');
+    fireEvent.click(screen.getByRole('button', { name: 'Add payment' }));
+    await selectComboboxOption('Select category', 'Overtime Hourly');
     expect(screen.getByText('All categories added')).toBeTruthy();
     fireEvent.change(getHoursInputForCategory('Overtime Hourly'), { target: { value: '2' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Create payslip' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => expect(onCreatePayslip).toHaveBeenCalledOnce());
     expect(onCreatePayslip.mock.calls[0][0].lineItems).toHaveLength(2);
@@ -76,10 +72,10 @@ describe('create payslip', () => {
       rates: payslipCategoryRates,
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Add payslip' }));
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Create payslip' })).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: 'Create Payslip' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy());
 
-    fireEvent.click(screen.getByRole('button', { name: 'Create payslip' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => expect(screen.getByText('Add at least one payment category')).toBeTruthy());
     expect(onCreatePayslip).not.toHaveBeenCalled();

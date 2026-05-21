@@ -98,7 +98,7 @@ export function InlineRateEditor(props: {
               </div>
 
               <div className="flex gap-2 text-muted-foreground">
-                <span className="text-muted-foreground italic tabular-nums">
+                <span className="text-xs text-muted-foreground italic tabular-nums">
                   Updated {formatRateChangedAt(entry.createdAt)}
                 </span>
               </div>

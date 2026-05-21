@@ -36,8 +36,7 @@ describe('edit rate', () => {
       paymentCategoryId: 1,
       effectiveFrom: startOfMonth(new Date('2026-03-01T00:00:00')),
     });
-    expect(screen.getByText('Current')).toBeTruthy();
-    expect(screen.getByText(format(previousRate.createdAt, 'MMMM d, yyyy'))).toBeTruthy();
+    expect(screen.getByText(`Updated ${format(previousRate.createdAt, 'MMMM d, yyyy')}`)).toBeTruthy();
     expect(screen.getByText(format(previousRate.effectiveFrom, 'MMM yyyy'))).toBeTruthy();
   });
 });

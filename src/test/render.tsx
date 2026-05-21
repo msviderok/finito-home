@@ -33,11 +33,14 @@ export function renderWithProviders(
   };
 }
 
-export async function renderPayslipsSection(ui: ReactElement, options: { employeeId: number; rates: CategoryRate[] }) {
+export async function renderPayslipsSection(
+  ui: ReactElement,
+  options: { employeeId: number; rates: CategoryRate[]; initialViewAsOfMonth?: Date },
+) {
   const queryClient = createTestQueryClient();
   await seedEmployeeCategoryRates(queryClient, options.employeeId, options.rates);
   seedPayslipList(queryClient, options.employeeId);
-  return renderWithProviders(ui, { queryClient });
+  return renderWithProviders(ui, { queryClient, initialViewAsOfMonth: options.initialViewAsOfMonth });
 }
 
 export async function seedEmployeeCategoryRates(queryClient: QueryClient, employeeId: number, rates: CategoryRate[]) {

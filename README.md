@@ -10,3 +10,5 @@
 - For real user management, we need to set up a proper authentication and authorization system with TRPC's protected procedure.
 - If I had more time, I would have added an ability to change any related entity from the form of any other related entity.
 - To emit unnecessary front-end related stuff, there might be a potential to notify the server via cookies about the view-as-of date.
+- For payslip creation, a separate view would be beneficial.
+- When a payslip is created for a specific month, it should instantly show the error when trying to create one for the same month.

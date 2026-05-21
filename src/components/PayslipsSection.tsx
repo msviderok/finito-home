@@ -1,14 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { Field, FieldArray, Form, getInput, insert, remove, useForm } from '@formisch/react';
+import { isSameMonth, startOfMonth } from 'date-fns';
 import { Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { payslipDraftFormSchema, sanitizeHoursInput } from '@/db/schema/payslips';
 import { getCategoryGroupAt, groupCategoryRates } from '@/lib/category-rates';
 import { formatCurrency } from '@/lib/currency';
+import { formatPayslipPaymentDate, viewAsOfInstant } from '@/lib/view-as-of-date';
 import { trpc } from '@/router';
 import type { CreatePayslipHandler } from './EmployeePayrollAccordion';
+import { MonthPicker } from './MonthPicker';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
-import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList } from './ui/combobox';
 import { Input } from './ui/input';
@@ -22,20 +24,28 @@ type CategoryOption = {
 };
 
 export function PayslipsSection(props: { employeeId: number; onCreatePayslip: CreatePayslipHandler }) {
+  const { viewAsOfMonth } = useViewAsOf();
   const [showForm, setShowForm] = useState(false);
   const { data: payslips = [] } = useQuery(trpc.employees.payslips.list.queryOptions({ employeeId: props.employeeId }));
+  const hasPayslipForViewAsOfMonth = payslips.some((payslip) => isSameMonth(payslip.paymentDate, viewAsOfMonth));
+  const canCreatePayslip = !hasPayslipForViewAsOfMonth;
 
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-sm font-semibold">Pay slips</h2>
-        <Button type="button" size="sm" onClick={() => setShowForm((value) => !value)}>
-          <Plus data-icon="inline-start" />
-          Add payslip
-        </Button>
+        {showForm ? (
+          <Button type="submit" form="add-payslip-form" size="sm">
+            Save
+          </Button>
+        ) : (
+          <Button type="button" size="sm" onClick={() => setShowForm(true)}>
+            Create Payslip
+          </Button>
+        )}
       </div>
 
-      {showForm && (
+      {showForm && canCreatePayslip && (
         <AddPayslipForm
           employeeId={props.employeeId}
           onCreatePayslip={async (input) => {
@@ -76,11 +86,8 @@ export function PayslipAccordionItem(props: { payslipId: number; employeeId: num
   return (
     <AccordionItem value={`payslip-${payslip.id}`}>
       <AccordionTrigger className="items-center">
-        <span className="font-medium tabular-nums">{payslip.paymentDate.toLocaleDateString()}</span>
-        <span className="ml-auto flex items-center gap-1.5 text-muted-foreground">
-          <Badge variant="outline">{payslip.lineItems.length} lines</Badge>
-          <span className="font-medium tabular-nums">{formatCurrency(total)}</span>
-        </span>
+        <span className="font-medium tabular-nums">{formatPayslipPaymentDate(payslip.paymentDate)}</span>
+        <span className="ml-auto font-medium text-muted-foreground tabular-nums">{formatCurrency(total)}</span>
       </AccordionTrigger>
       <AccordionContent>
         <div className="flex flex-col gap-2">
@@ -113,22 +120,29 @@ export function PayslipAccordionItem(props: { payslipId: number; employeeId: num
 }
 
 function AddPayslipForm(props: { employeeId: number; onCreatePayslip: CreatePayslipHandler }) {
-  const { data: categoryRates = [] } = useQuery(
-    trpc.paymentCategories.forEmployee.queryOptions({ employeeId: props.employeeId, effectiveDate: new Date() }),
-  );
+  const { viewAsOfMonth } = useViewAsOf();
   const form = useForm({
     schema: payslipDraftFormSchema,
     initialInput: {
       employeeId: props.employeeId,
-      paymentDate: new Date(),
+      paymentDate: viewAsOfMonth,
       lineItems: [],
     },
     validate: 'submit',
     revalidate: 'input',
   });
-  const paymentDate = getInput(form, { path: ['paymentDate'] });
-  const at = paymentDate instanceof Date && !Number.isNaN(paymentDate.getTime()) ? paymentDate : new Date();
-  const categoryGroups = groupCategoryRates(categoryRates ?? [], at);
+  const paymentMonth = getInput(form, { path: ['paymentDate'] });
+  const paymentAt = useMemo(() => {
+    const month =
+      paymentMonth instanceof Date && !Number.isNaN(paymentMonth.getTime())
+        ? startOfMonth(paymentMonth)
+        : viewAsOfMonth;
+    return viewAsOfInstant(month);
+  }, [paymentMonth, viewAsOfMonth]);
+  const { data: categoryRates = [] } = useQuery(
+    trpc.paymentCategories.forEmployee.queryOptions({ employeeId: props.employeeId, effectiveDate: paymentAt }),
+  );
+  const categoryGroups = groupCategoryRates(categoryRates ?? [], paymentAt);
   const categoryOptions = categoryGroups.map((group) => ({
     value: group.paymentCategoryId,
     label: group.paymentCategory.name,
@@ -137,90 +151,106 @@ function AddPayslipForm(props: { employeeId: number; onCreatePayslip: CreatePays
 
   return (
     <Form
+      id="add-payslip-form"
       of={form}
       onSubmit={async (output) => {
-        await props.onCreatePayslip(output);
+        await props.onCreatePayslip({
+          ...output,
+          paymentDate: viewAsOfInstant(startOfMonth(output.paymentDate)),
+        });
       }}
       className="flex flex-col gap-3 rounded-md border p-3"
     >
       <Field of={form} path={['employeeId']}>
         {(field) => <input {...field.props} type="hidden" value={String(field.input ?? '')} />}
       </Field>
-
-      <div className="grid gap-3 sm:grid-cols-[minmax(0,12rem)_1fr]">
-        <label className="flex flex-col gap-1">
-          <span className="text-muted-foreground">Payment date</span>
-          <Field of={form} path={['paymentDate']}>
-            {(field) => (
-              <Input
-                {...field.props}
-                type="date"
-                value={formatDateInputValue(field.input)}
-                onChange={(event) => field.onChange(parseDateInputValue(event.target.value))}
-                aria-invalid={field.errors ? true : undefined}
-              />
-            )}
-          </Field>
-        </label>
-
-        <FieldArray of={form} path={['lineItems']}>
-          {(lineItems) => {
-            const draftItems = getInput(form, { path: ['lineItems'] }) ?? [];
-            const selectedCategoryIds = new Set(draftItems.map((item) => item.paymentCategoryId).filter(Boolean));
-            const availableOptions = categoryOptions.filter((option) => !selectedCategoryIds.has(option.value));
-
-            return (
-              <div className="flex flex-col gap-2">
-                <PaymentCategoryCombobox
-                  options={availableOptions}
-                  disabled={availableOptions.length === 0}
-                  onSelect={(option) => {
-                    insert(form, {
-                      path: ['lineItems'],
-                      initialInput: {
-                        paymentCategoryId: option.value,
-                        hours: '',
-                      },
-                    });
-                  }}
-                />
-                {availableOptions.length === 0 && <p className="text-muted-foreground">All categories added</p>}
-                {lineItems.errors && <p className="text-destructive">{lineItems.errors[0]}</p>}
-              </div>
-            );
-          }}
-        </FieldArray>
-      </div>
-
-      <FieldArray of={form} path={['lineItems']}>
-        {(lineItems) => (
-          <div className="flex flex-col gap-2">
-            {lineItems.items.map((itemId, index) => (
-              <DraftLineItemRow
-                key={itemId}
-                form={form}
-                index={index}
-                categoryOptions={categoryOptions}
-                onRemove={() => remove(form, { path: ['lineItems'], at: index })}
-              />
-            ))}
-          </div>
+      <Field of={form} path={['paymentDate']}>
+        {(field) => (
+          <label className="flex flex-col gap-1 self-start">
+            <span className="text-muted-foreground">Payment month</span>
+            <MonthPicker
+              aria-label="Payment month"
+              value={
+                field.input instanceof Date && !Number.isNaN(field.input.getTime())
+                  ? startOfMonth(field.input)
+                  : viewAsOfMonth
+              }
+              onChange={(month) => field.onChange(month)}
+            />
+          </label>
         )}
-      </FieldArray>
+      </Field>
+      <FieldArray of={form} path={['lineItems']}>
+        {(lineItems) => {
+          const draftItems = getInput(form, { path: ['lineItems'] }) ?? [];
+          const selectedCategoryIds = new Set(draftItems.map((item) => item.paymentCategoryId).filter(Boolean));
+          const availableOptions = categoryOptions.filter((option) => !selectedCategoryIds.has(option.value));
 
-      <div className="flex justify-end">
-        <Button type="submit" disabled={form.isSubmitting}>
-          Create payslip
-        </Button>
-      </div>
+          return (
+            <div className="flex flex-col gap-2">
+              {lineItems.items.map((itemId, index) => (
+                <DraftLineItemRow
+                  key={itemId}
+                  form={form}
+                  index={index}
+                  categoryOptions={categoryOptions}
+                  onRemove={() => remove(form, { path: ['lineItems'], at: index })}
+                />
+              ))}
+              <AddPaymentControl
+                options={availableOptions}
+                onSelect={(option) => {
+                  insert(form, {
+                    path: ['lineItems'],
+                    initialInput: {
+                      paymentCategoryId: option.value,
+                      hours: '',
+                    },
+                  });
+                }}
+              />
+              {availableOptions.length === 0 && draftItems.length > 0 && (
+                <p className="text-muted-foreground">All categories added</p>
+              )}
+              {lineItems.errors && <p className="text-destructive">{lineItems.errors[0]}</p>}
+            </div>
+          );
+        }}
+      </FieldArray>
     </Form>
+  );
+}
+
+function AddPaymentControl(props: { options: CategoryOption[]; onSelect: (option: CategoryOption) => void }) {
+  const [selectingCategory, setSelectingCategory] = useState(false);
+
+  if (props.options.length === 0) return null;
+
+  if (selectingCategory) {
+    return (
+      <PaymentCategoryCombobox
+        options={props.options}
+        onSelect={(option) => {
+          props.onSelect(option);
+          setSelectingCategory(false);
+        }}
+        onCancel={() => setSelectingCategory(false)}
+      />
+    );
+  }
+
+  return (
+    <Button type="button" variant="outline" size="sm" className="self-start" onClick={() => setSelectingCategory(true)}>
+      <Plus data-icon="inline-start" />
+      Add payment
+    </Button>
   );
 }
 
 function PaymentCategoryCombobox(props: {
   options: CategoryOption[];
-  disabled: boolean;
   onSelect: (option: CategoryOption) => void;
+  onCancel?: () => void;
 }) {
   const [inputValue, setInputValue] = useState('');
   const filteredOptions = props.options.filter((option) =>
@@ -228,35 +258,37 @@ function PaymentCategoryCombobox(props: {
   );
 
   return (
-    <Combobox<CategoryOption>
-      value={null}
-      inputValue={inputValue}
-      itemToStringLabel={(option) => option.label}
-      onInputValueChange={setInputValue}
-      onValueChange={(option) => {
-        if (!option) return;
-        props.onSelect(option);
-        setInputValue('');
-      }}
-    >
-      <ComboboxInput
-        disabled={props.disabled}
-        placeholder="Add payment category"
-        className="w-full"
-        showClear={inputValue.length > 0}
-      />
-      <ComboboxContent>
-        <ComboboxList>
-          {filteredOptions.map((option) => (
-            <ComboboxItem key={option.value} value={option}>
-              <span className="flex-1">{option.label}</span>
-              <span className="text-muted-foreground tabular-nums">{formatCurrency(option.rateAmount)}/hr</span>
-            </ComboboxItem>
-          ))}
-        </ComboboxList>
-        <ComboboxEmpty>No categories available</ComboboxEmpty>
-      </ComboboxContent>
-    </Combobox>
+    <div className="flex flex-col gap-2">
+      <Combobox<CategoryOption>
+        value={null}
+        inputValue={inputValue}
+        itemToStringLabel={(option) => option.label}
+        onInputValueChange={setInputValue}
+        onValueChange={(option) => {
+          if (!option) return;
+          props.onSelect(option);
+          setInputValue('');
+        }}
+      >
+        <ComboboxInput placeholder="Select category" className="w-full" showClear={inputValue.length > 0} />
+        <ComboboxContent>
+          <ComboboxList>
+            {filteredOptions.map((option) => (
+              <ComboboxItem key={option.value} value={option}>
+                <span className="flex-1">{option.label}</span>
+                <span className="text-muted-foreground tabular-nums">{formatCurrency(option.rateAmount)}/hr</span>
+              </ComboboxItem>
+            ))}
+          </ComboboxList>
+          <ComboboxEmpty>No categories available</ComboboxEmpty>
+        </ComboboxContent>
+      </Combobox>
+      {props.onCancel && (
+        <Button type="button" variant="ghost" size="sm" className="self-start" onClick={props.onCancel}>
+          Cancel
+        </Button>
+      )}
+    </div>
   );
 }
 
@@ -321,18 +353,4 @@ function DraftLineItemRow(props: {
       }}
     </Field>
   );
-}
-
-function formatDateInputValue(date: Date | undefined) {
-  if (!date || Number.isNaN(date.getTime())) return '';
-
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
-}
-
-function parseDateInputValue(value: string) {
-  return value ? new Date(`${value}T00:00:00`) : new Date(Number.NaN);
 }

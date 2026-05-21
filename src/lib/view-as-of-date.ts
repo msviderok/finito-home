@@ -1,4 +1,4 @@
-import { endOfMonth, isSameMonth, startOfMonth } from 'date-fns';
+import { endOfMonth, format, isSameMonth, startOfMonth } from 'date-fns';
 
 export function currentViewAsOfMonth() {
   return startOfMonth(new Date());
@@ -16,6 +16,10 @@ export function formatMonthInputValue(month: Date) {
   const year = month.getFullYear();
   const monthPart = String(month.getMonth() + 1).padStart(2, '0');
   return `${year}-${monthPart}`;
+}
+
+export function formatPayslipPaymentDate(date: Date) {
+  return format(date, 'MMM yyyy');
 }
 
 export function parseMonthInputValue(value: string) {
