@@ -11,6 +11,10 @@ function PopoverTrigger({ ...props }: PopoverPrimitive.Trigger.Props) {
   return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />;
 }
 
+function PopoverArrow({ ...props }: PopoverPrimitive.Arrow.Props) {
+  return <PopoverPrimitive.Arrow data-slot="popover-arrow" {...props} />;
+}
+
 function PopoverContent({
   className,
   align = 'center',
@@ -62,4 +66,4 @@ function PopoverDescription({ className, ...props }: PopoverPrimitive.Descriptio
   );
 }
 
-export { Popover, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle, PopoverTrigger };
+export { Popover, PopoverArrow, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle, PopoverTrigger };

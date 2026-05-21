@@ -15,6 +15,9 @@ catalogs:
     '@fontsource-variable/dm-sans':
       specifier: ^5.2.8
       version: 5.2.8
+    '@formisch/react':
+      specifier: ^0.4.6
+      version: 0.4.6
     '@libsql/client':
       specifier: ^0.17.3
       version: 0.17.3
@@ -87,6 +90,9 @@ catalogs:
     clsx:
       specifier: ^2.1.1
       version: 2.1.1
+    date-fns:
+      specifier: ^4.2.1
+      version: 4.2.1
     drizzle-kit:
       specifier: 1.0.0-beta.22
       version: 1.0.0-beta.22
@@ -155,10 +161,13 @@ importers:
     dependencies:
       '@base-ui/react':
         specifier: 'catalog:'
-        version: 1.5.0(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+        version: 1.5.0(@types/react@19.2.15)(date-fns@4.2.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@fontsource-variable/dm-sans':
         specifier: 'catalog:'
         version: 5.2.8
+      '@formisch/react':
+        specifier: 'catalog:'
+        version: 0.4.6(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@6.0.3)(valibot@1.4.0(typescript@6.0.3))
       '@libsql/client':
         specifier: 'catalog:'
         version: 0.17.3
@@ -198,6 +207,9 @@ importers:
       clsx:
         specifier: 'catalog:'
         version: 2.1.1
+      date-fns:
+        specifier: 'catalog:'
+        version: 4.2.1
       drizzle-orm:
         specifier: 'catalog:'
         version: 1.0.0-beta.22(@libsql/client@0.17.3)(valibot@1.4.0(typescript@6.0.3))(zod@3.25.76)
@@ -763,6 +775,17 @@ packages:
 
   '@fontsource-variable/dm-sans@5.2.8':
     resolution: {integrity: sha512-AxkvMTvNWgfrmlyjiV05vlHYJa+nRQCf1EfvIrQAPBpFJW0O9VTz7oAFr9S3lvbWdmnFoBk7yFqQL86u64nl2g==}
+
+  '@formisch/react@0.4.6':
+    resolution: {integrity: sha512-+vG5qL2ezl4hi5S/AFWfakxC1c0eitfok+HQB/dxmX20MU9lBICYKzQH3bIYazOvJK5QDQQG4Xdjm+RDcTiAuQ==}
+    peerDependencies:
+      react: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      typescript: '>=5'
+      valibot: ^1.0.0
+    peerDependenciesMeta:
+      typescript:
+        optional: true
 
   '@hono/node-server@1.19.14':
     resolution: {integrity: sha512-GwtvgtXxnWsucXvbQXkRgqksiH2Qed37H9xHZocE5sA3N8O8O8/8FA3uclQXxXVzc9XBZuEOMK7+r02FmSpHtw==}
@@ -3236,6 +3259,9 @@ packages:
     resolution: {integrity: sha512-23XHcCF+coGYevirZceTVD7NdJOqVn+49IHyxgszm+JIiHLoB2TkmPtsYkNWT1pvRSGkc35L6NHs0yHkN2SumA==}
     engines: {node: ^20.19.0 || ^22.12.0 || >=24.0.0}
 
+  date-fns@4.2.1:
+    resolution: {integrity: sha512-37RhSdxaG1suen6VDCza6rNrQfooyQh57HFVPwQGEq2QWliVLzPQZ8Oa017weOu+HZCnzI7N3Pf/wyoBKfEqrA==}
+
   db0@0.3.4:
     resolution: {integrity: sha512-RiXXi4WaNzPTHEOu8UPQKMooIbqOEyqA1t7Z6MsdxSCeb8iUC9ko3LcmsLmeUt2SM5bctfArZKkRQggKZz7JNw==}
     peerDependencies:
@@ -5518,7 +5544,7 @@ snapshots:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.28.5
 
-  '@base-ui/react@1.5.0(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+  '@base-ui/react@1.5.0(@types/react@19.2.15)(date-fns@4.2.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
       '@babel/runtime': 7.29.2
       '@base-ui/utils': 0.2.9(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -5529,6 +5555,7 @@ snapshots:
       use-sync-external-store: 1.6.0(react@19.2.6)
     optionalDependencies:
       '@types/react': 19.2.15
+      date-fns: 4.2.1
 
   '@base-ui/utils@0.2.9(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
@@ -5738,6 +5765,14 @@ snapshots:
   '@floating-ui/utils@0.2.11': {}
 
   '@fontsource-variable/dm-sans@5.2.8': {}
+
+  '@formisch/react@0.4.6(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@6.0.3)(valibot@1.4.0(typescript@6.0.3))':
+    dependencies:
+      react: 19.2.6
+      react-dom: 19.2.6(react@19.2.6)
+      valibot: 1.4.0(typescript@6.0.3)
+    optionalDependencies:
+      typescript: 6.0.3
 
   '@hono/node-server@1.19.14(hono@4.12.21)':
     dependencies:
@@ -7951,6 +7986,8 @@ snapshots:
       whatwg-url: 16.0.1(@noble/hashes@1.8.0)
     transitivePeerDependencies:
       - '@noble/hashes'
+
+  date-fns@4.2.1: {}
 
   db0@0.3.4(@libsql/client@0.17.3)(drizzle-orm@1.0.0-beta.22(@libsql/client@0.17.3)(valibot@1.4.0(typescript@6.0.3))(zod@3.25.76)):
     optionalDependencies:

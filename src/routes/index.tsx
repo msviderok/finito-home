@@ -1,11 +1,11 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { RateEditPopover } from '@/components/RateEditPopover';
+import { formatCurrency } from '@/lib/currency';
 import { trpc } from '@/router';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { Edit2 } from 'lucide-react';
+import { useState } from 'react';
 
 export const Route = createFileRoute('/')({
   component: App,
@@ -13,6 +13,9 @@ export const Route = createFileRoute('/')({
 
 function App() {
   const { data = [] } = useQuery(trpc.listEmployees.queryOptions());
+  const createRate = useMutation(trpc.createRate.mutationOptions());
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const stopEditing = () => setEditingId(null);
 
   return (
     <div className="flex p-6">
@@ -37,20 +40,18 @@ function App() {
                       <TableCell>{rate.paymentCategory.name}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
-                          <Tooltip>
-                            <TooltipTrigger
-                              render={
-                                <Button size="icon-xs">
-                                  <Edit2 className="size-3" />
-                                </Button>
-                              }
-                            />
-
-                            <TooltipContent align="start">
-                              <p>Edit rate</p>
-                            </TooltipContent>
-                          </Tooltip>
-                          <div className="text-sm font-medium">{formatCurrency(rate.amount)}</div>
+                          <RateEditPopover
+                            rate={rate}
+                            employeeId={employee.id}
+                            open={editingId === rate.id}
+                            editDisabled={editingId != null && editingId !== rate.id}
+                            onEditClick={() => setEditingId(rate.id)}
+                            onStopEditing={stopEditing}
+                            onCreateRate={async (input) => {
+                              await createRate.mutateAsync(input);
+                            }}
+                          />
+                          <span className="text-sm font-medium tabular-nums">{formatCurrency(rate.amount)}</span>
                         </div>
                       </TableCell>
                       <TableCell>{rate.effectiveFrom.toLocaleDateString()}</TableCell>
@@ -64,8 +65,4 @@ function App() {
       </Accordion>
     </div>
   );
-}
-
-function formatCurrency(amount: number) {
-  return Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 }

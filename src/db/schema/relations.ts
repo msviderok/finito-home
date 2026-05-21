@@ -36,6 +36,7 @@ export const relations = defineRelations(
     rates: {
       paymentCategory: r.one.paymentCategories({ from: r.rates.paymentCategoryId, to: r.paymentCategories.id }),
       employee: r.one.employees({ from: r.rates.employeeId, to: r.employees.id }),
+      previousRate: r.one.rates({ from: r.rates.previousRateId, to: r.rates.id }),
     },
     users: {
       payslips: r.many.payslips({ from: r.users.id, to: r.payslips.createdById }),

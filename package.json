@@ -16,6 +16,7 @@
   "dependencies": {
     "@base-ui/react": "catalog:",
     "@fontsource-variable/dm-sans": "catalog:",
+    "@formisch/react": "catalog:",
     "@libsql/client": "catalog:",
     "@t3-oss/env-core": "catalog:",
     "@tailwindcss/vite": "catalog:",
@@ -29,6 +30,7 @@
     "@trpc/tanstack-react-query": "catalog:",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
+    "date-fns": "catalog:",
     "drizzle-orm": "catalog:",
     "drizzle-valibot": "catalog:",
     "lucide-react": "catalog:",

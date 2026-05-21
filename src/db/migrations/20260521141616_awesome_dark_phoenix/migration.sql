@@ -1,0 +1,1 @@
+ALTER TABLE `rates` ADD `effective_to` integer;
