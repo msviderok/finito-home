@@ -1,7 +1,7 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
-import { startOfMonth } from 'date-fns';
+import { format, startOfMonth } from 'date-fns';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { InlineRateEditor } from '@/components/RateEditPopover';
+import { InlineRateEditor } from '@/components/InlineRateEditor';
 import { hourlyCategoryRates } from './fixtures';
 import { renderWithProviders } from './render';
 
@@ -37,6 +37,7 @@ describe('edit rate', () => {
       effectiveFrom: startOfMonth(new Date('2026-03-01T00:00:00')),
     });
     expect(screen.getByText('Current')).toBeTruthy();
-    expect(screen.getByText(previousRate.effectiveFrom.toLocaleDateString())).toBeTruthy();
+    expect(screen.getByText(format(previousRate.createdAt, 'MMMM d, yyyy'))).toBeTruthy();
+    expect(screen.getByText(format(previousRate.effectiveFrom, 'MMM yyyy'))).toBeTruthy();
   });
 });

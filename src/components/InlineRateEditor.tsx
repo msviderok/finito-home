@@ -1,5 +1,5 @@
 import { Field, Form, useForm } from '@formisch/react';
-import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
@@ -12,6 +12,8 @@ import {
 } from '@/db/schema/rates';
 import type { SelectPaymentCategory } from '@/db/schema/paymentCategories';
 import { formatCurrency, formatRateAmount, sanitizeRateAmountInput } from '@/lib/currency';
+import { Badge } from './ui/badge';
+import { cn } from '@/lib/utils';
 
 export type InlineRateEditorRate = SelectRate & {
   amount: number;
@@ -75,15 +77,28 @@ export function InlineRateEditor(props: {
         <p className="text-sm font-medium">Rate history</p>
         <ul className="flex flex-col gap-1.5">
           {props.history.map((entry) => (
-            <li key={entry.id} className="flex items-center justify-between gap-3 rounded-md border px-2 py-1.5">
-              <span className="font-medium tabular-nums">{formatCurrency(entry.amount)}</span>
-              <div className="flex items-center gap-1.5">
-                {entry.id === props.currentRate.id && (
-                  <Badge variant="default" className="shrink-0">
-                    Current
+            <li
+              key={entry.id}
+              className={cn(
+                'relative flex items-center justify-between gap-2 rounded-md border px-2 py-1.5 text-sm',
+                props.currentRate.id !== entry.id && 'bg-muted/50 opacity-20',
+              )}
+            >
+              <div className="item-center flex gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium tabular-nums">{formatCurrency(entry.amount)}</span>
+                </div>
+                <Separator orientation="vertical" className="ml-auto h-4" />
+                <p className="text-muted-foreground tabular-nums">
+                  As of{' '}
+                  <Badge variant="outline">
+                    <span className="font-medium">{formatRateEffectiveFrom(entry.effectiveFrom)}</span>
                   </Badge>
-                )}
-                <span className="text-muted-foreground tabular-nums">{entry.effectiveFrom.toLocaleDateString()}</span>
+                </p>
+              </div>
+
+              <div className="flex gap-2 text-muted-foreground">
+                <span className="text-muted-foreground tabular-nums">{formatRateChangedAt(entry.createdAt)}</span>
               </div>
             </li>
           ))}
@@ -91,4 +106,12 @@ export function InlineRateEditor(props: {
       </div>
     </div>
   );
+}
+
+function formatRateChangedAt(date: Date) {
+  return format(date, 'MMMM d, yyyy');
+}
+
+function formatRateEffectiveFrom(date: Date) {
+  return format(date, 'MMM yyyy');
 }

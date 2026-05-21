@@ -1,7 +1,7 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { startOfMonth } from 'date-fns';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { InlineRateEditor } from '@/components/RateEditPopover';
+import { InlineRateEditor } from '@/components/InlineRateEditor';
 import { createCategoryRate } from './fixtures';
 import { renderWithProviders } from './render';
 

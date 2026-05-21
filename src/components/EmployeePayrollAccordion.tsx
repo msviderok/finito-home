@@ -6,7 +6,7 @@ import { useViewAsOf } from '@/contexts/ViewAsOfProvider';
 import { groupCategoryRates } from '@/lib/category-rates';
 import type { AppRouter } from '@/lib/trpc';
 import { trpc } from '@/router';
-import type { CreateRateHandler } from './RateEditPopover';
+import type { CreateRateHandler } from './InlineRateEditor';
 import { PaymentCategoriesSection } from './PaymentCategoriesSection';
 import { PayslipsSection } from './PayslipsSection';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';

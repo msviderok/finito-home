@@ -3,8 +3,8 @@ import { groupCategoryRates } from '@/lib/category-rates';
 import { formatCurrency } from '@/lib/currency';
 import { trpc } from '@/router';
 import { useQuery } from '@tanstack/react-query';
-import type { CreateRateHandler } from './RateEditPopover';
-import { InlineRateEditor } from './RateEditPopover';
+import type { CreateRateHandler } from './InlineRateEditor';
+import { InlineRateEditor } from './InlineRateEditor';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { Badge } from './ui/badge';
 
