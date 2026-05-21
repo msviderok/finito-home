@@ -54,7 +54,6 @@
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "drizzle-kit": "catalog:",
-    "drizzle-seed": "catalog:",
     "eslint-plugin-import-x": "catalog:",
     "eslint-plugin-n": "catalog:",
     "jsdom": "catalog:",

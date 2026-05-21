@@ -84,9 +84,6 @@ catalogs:
     drizzle-orm:
       specifier: 1.0.0-beta.22
       version: 1.0.0-beta.22
-    drizzle-seed:
-      specifier: ^0.3.1
-      version: 0.3.1
     drizzle-valibot:
       specifier: ^0.4.2
       version: 0.4.2
@@ -262,9 +259,6 @@ importers:
       drizzle-kit:
         specifier: 'catalog:'
         version: 1.0.0-beta.22
-      drizzle-seed:
-        specifier: 'catalog:'
-        version: 0.3.1(drizzle-orm@1.0.0-beta.22(@libsql/client@0.17.3)(valibot@1.4.0(typescript@6.0.3))(zod@3.25.76))
       eslint-plugin-import-x:
         specifier: 'catalog:'
         version: 4.16.2(@typescript-eslint/utils@8.59.4(eslint@10.4.0(jiti@2.7.0))(typescript@6.0.3))(eslint@10.4.0(jiti@2.7.0))
@@ -3432,14 +3426,6 @@ packages:
       zod:
         optional: true
 
-  drizzle-seed@0.3.1:
-    resolution: {integrity: sha512-F/0lgvfOAsqlYoHM/QAGut4xXIOXoE5VoAdv2FIl7DpGYVXlAzKuJO+IphkKUFK3Dz+rFlOsQLnMNrvoQ0cx7g==}
-    peerDependencies:
-      drizzle-orm: '>=0.36.4'
-    peerDependenciesMeta:
-      drizzle-orm:
-        optional: true
-
   drizzle-valibot@0.4.2:
     resolution: {integrity: sha512-tzjT7g0Di/HX7426marIy8IDtWODjPgrwvgscdevLQRUe5rzYzRhx6bDsYLdDFF9VI/eaYgnjNeF/fznWJoUjg==}
     peerDependencies:
@@ -4585,9 +4571,6 @@ packages:
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
-
-  pure-rand@6.1.0:
-    resolution: {integrity: sha512-bVWawvoZoBYpp6yIoQtQXHZjmz35RSVHnUOTefl8Vcjr8snTPY1wnpSPMWekcFwbxI6gtmT7rSYPFvz71ldiOA==}
 
   qs@6.15.2:
     resolution: {integrity: sha512-Rzq0KEyX/w/tEybncDgdkZrJgVUsUMk3xjh3t5bv3S1HTAtg+uOYt72+ZfwiQwKdysThkTBdL/rTi6HDmX9Ddw==}
@@ -7989,12 +7972,6 @@ snapshots:
       valibot: 1.4.0(typescript@6.0.3)
       zod: 3.25.76
 
-  drizzle-seed@0.3.1(drizzle-orm@1.0.0-beta.22(@libsql/client@0.17.3)(valibot@1.4.0(typescript@6.0.3))(zod@3.25.76)):
-    dependencies:
-      pure-rand: 6.1.0
-    optionalDependencies:
-      drizzle-orm: 1.0.0-beta.22(@libsql/client@0.17.3)(valibot@1.4.0(typescript@6.0.3))(zod@3.25.76)
-
   drizzle-valibot@0.4.2(drizzle-orm@1.0.0-beta.22(@libsql/client@0.17.3)(valibot@1.4.0(typescript@6.0.3))(zod@3.25.76))(valibot@1.4.0(typescript@6.0.3)):
     dependencies:
       drizzle-orm: 1.0.0-beta.22(@libsql/client@0.17.3)(valibot@1.4.0(typescript@6.0.3))(zod@3.25.76)
@@ -9196,8 +9173,6 @@ snapshots:
       ipaddr.js: 1.9.1
 
   punycode@2.3.1: {}
-
-  pure-rand@6.1.0: {}
 
   qs@6.15.2:
     dependencies:
