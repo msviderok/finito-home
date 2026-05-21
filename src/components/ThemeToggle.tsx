@@ -50,7 +50,7 @@ export function ThemeToggle() {
       type="button"
       variant="outline"
       size="icon"
-      className="fixed top-4 left-4 z-50 bg-background/80 backdrop-blur"
+      className="bg-background/80 backdrop-blur"
       onClick={() => {
         const nextIsDark = !isDark;
         const nextTheme = nextIsDark ? 'dark' : 'light';

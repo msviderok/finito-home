@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, type RenderOptions } from '@testing-library/react';
 import type { ReactElement } from 'react';
+import { ViewAsOfProvider } from '@/contexts/view-as-of';
 import type { CategoryRate } from '@/lib/category-rates';
 import { trpc } from '@/router';
 
@@ -22,7 +23,11 @@ export function renderWithProviders(
   return {
     queryClient,
     ...render(ui, {
-      wrapper: ({ children }) => <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>,
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={queryClient}>
+          <ViewAsOfProvider>{children}</ViewAsOfProvider>
+        </QueryClientProvider>
+      ),
       ...renderOptions,
     }),
   };

@@ -7,7 +7,9 @@ import {
   ratesTable,
   type SelectUser,
 } from '@/db/schema';
+import { findSupersededRate, ratePeriodsOverlap } from '@/lib/category-rates';
 import { formatCents } from '@/lib/currency';
+import { eq } from 'drizzle-orm';
 import { initTRPC, TRPCError } from '@trpc/server';
 import { type FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch';
 import superjson from 'superjson';
@@ -218,14 +220,53 @@ export const appRouter = t.router({
         }),
 
       create: authedProcedure.input(rateCreateMutationSchema).mutation(async ({ ctx, input }) => {
-        await ctx.db.insert(ratesTable).values({
-          employeeId: input.employeeId,
-          paymentCategoryId: input.paymentCategoryId,
-          amountCents: Math.round(input.amount * 100),
-          effectiveFrom: input.effectiveFrom,
-          createdAt: new Date(),
-          previousRateId: input.previousRateId,
-          effectiveTo: input.effectiveTo,
+        return ctx.db.transaction(async (tx) => {
+          const categoryRates = await tx.query.rates.findMany({
+            where: {
+              employeeId: input.employeeId,
+              paymentCategoryId: input.paymentCategoryId,
+            },
+          });
+
+          const hasTimelineConflict = categoryRates.some((rate) =>
+            ratePeriodsOverlap(rate.effectiveFrom, rate.effectiveTo, input.effectiveFrom, input.effectiveTo),
+          );
+
+          if (hasTimelineConflict && !findSupersededRate(categoryRates, input.effectiveFrom, input.effectiveTo)) {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: 'New rate overlaps an existing rate timeline',
+            });
+          }
+
+          const existingRate = findSupersededRate(categoryRates, input.effectiveFrom, input.effectiveTo);
+
+          let previousRateId = input.previousRateId;
+          if (existingRate) {
+            await tx
+              .update(ratesTable)
+              .set({ effectiveTo: input.effectiveFrom })
+              .where(eq(ratesTable.id, existingRate.id));
+
+            if (previousRateId !== existingRate.id) {
+              previousRateId = existingRate.id;
+            }
+          }
+
+          const [rate] = await tx
+            .insert(ratesTable)
+            .values({
+              employeeId: input.employeeId,
+              paymentCategoryId: input.paymentCategoryId,
+              amountCents: Math.round(input.amount * 100),
+              effectiveFrom: input.effectiveFrom,
+              createdAt: new Date(),
+              previousRateId,
+              effectiveTo: input.effectiveTo,
+            })
+            .returning();
+
+          return { id: rate.id };
         });
       }),
     }),

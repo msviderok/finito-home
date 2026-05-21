@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { useViewAsOf } from '@/contexts/view-as-of';
 import { groupCategoryRates } from '@/lib/category-rates';
 import { formatCurrency } from '@/lib/currency';
 import { trpc } from '@/router';
@@ -9,10 +10,11 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './
 import { Badge } from './ui/badge';
 
 export function PaymentCategoriesSection(props: { employeeId: number; onCreateRate: CreateRateHandler }) {
+  const { viewAsOfAt } = useViewAsOf();
   const { data: categoryRates = [] } = useQuery(
     trpc.paymentCategories.forEmployee.queryOptions({ employeeId: props.employeeId }),
   );
-  const categoryGroups = useMemo(() => groupCategoryRates(categoryRates), [categoryRates]);
+  const categoryGroups = useMemo(() => groupCategoryRates(categoryRates, viewAsOfAt), [categoryRates, viewAsOfAt]);
 
   return (
     <section className="flex flex-col gap-2">

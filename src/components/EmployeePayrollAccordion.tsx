@@ -2,6 +2,7 @@ import type { inferRouterOutputs } from '@trpc/server';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import type { PayslipCreateMutationInput } from '@/db/schema/payslips';
+import { useViewAsOf } from '@/contexts/view-as-of';
 import { groupCategoryRates } from '@/lib/category-rates';
 import type { AppRouter } from '@/lib/trpc';
 import { trpc } from '@/router';
@@ -49,11 +50,12 @@ export function EmployeeAccordionItem(props: {
   onCreatePayslip: CreatePayslipHandler;
 }) {
   const { data: employee } = useQuery(trpc.employees.get.queryOptions({ id: props.employeeId }));
+  const { viewAsOfAt } = useViewAsOf();
   const { data: categoryRates = [] } = useQuery(
     trpc.paymentCategories.forEmployee.queryOptions({ employeeId: props.employeeId }),
   );
   const { data: payslips = [] } = useQuery(trpc.employees.payslips.list.queryOptions({ employeeId: props.employeeId }));
-  const categoryGroups = useMemo(() => groupCategoryRates(categoryRates), [categoryRates]);
+  const categoryGroups = useMemo(() => groupCategoryRates(categoryRates, viewAsOfAt), [categoryRates, viewAsOfAt]);
 
   if (!employee) return null;
 

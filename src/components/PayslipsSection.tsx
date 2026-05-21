@@ -3,6 +3,7 @@ import { Field, FieldArray, Form, getInput, insert, remove, useForm } from '@for
 import { Plus, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { payslipDraftFormSchema, sanitizeHoursInput } from '@/db/schema/payslips';
+import { useViewAsOf } from '@/contexts/view-as-of';
 import { groupCategoryRates } from '@/lib/category-rates';
 import { formatCurrency } from '@/lib/currency';
 import { trpc } from '@/router';
@@ -99,10 +100,11 @@ export function PayslipAccordionItem(props: { payslipId: number }) {
 }
 
 function AddPayslipForm(props: { employeeId: number; onCreatePayslip: CreatePayslipHandler }) {
+  const { viewAsOfAt } = useViewAsOf();
   const { data: categoryRates = [] } = useQuery(
     trpc.paymentCategories.forEmployee.queryOptions({ employeeId: props.employeeId }),
   );
-  const categoryGroups = useMemo(() => groupCategoryRates(categoryRates), [categoryRates]);
+  const categoryGroups = useMemo(() => groupCategoryRates(categoryRates, viewAsOfAt), [categoryRates, viewAsOfAt]);
   const form = useForm({
     schema: payslipDraftFormSchema,
     initialInput: {
