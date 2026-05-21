@@ -1,4 +1,4 @@
-import { integer, sqliteTable, uniqueIndex, type AnySQLiteColumn } from 'drizzle-orm/sqlite-core';
+import { integer, sqliteTable, type AnySQLiteColumn } from 'drizzle-orm/sqlite-core';
 import { createInsertSchema, createSelectSchema, createUpdateSchema } from 'drizzle-valibot';
 import { startOfMonth } from 'date-fns';
 import * as v from 'valibot';
@@ -6,24 +6,20 @@ import { isValidRateAmountInput, parseRateAmountInput } from '@/lib/currency';
 import { employeesTable } from './employees';
 import { paymentCategoriesTable } from './paymentCategories';
 
-export const ratesTable = sqliteTable(
-  'rates',
-  {
-    id: integer('id').primaryKey(),
-    amountCents: integer('amount_cents').notNull(),
-    employeeId: integer('employee_id')
-      .references(() => employeesTable.id)
-      .notNull(),
-    paymentCategoryId: integer('payment_category_id')
-      .references(() => paymentCategoriesTable.id)
-      .notNull(),
-    effectiveFrom: integer('effective_from', { mode: 'timestamp_ms' }).notNull(),
-    effectiveTo: integer('effective_to', { mode: 'timestamp_ms' }),
-    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
-    previousRateId: integer('previous_rate_id').references((): AnySQLiteColumn => ratesTable.id),
-  },
-  (table) => [uniqueIndex('employee_category').on(table.employeeId, table.paymentCategoryId)],
-);
+export const ratesTable = sqliteTable('rates', {
+  id: integer('id').primaryKey(),
+  amountCents: integer('amount_cents').notNull(),
+  employeeId: integer('employee_id')
+    .references(() => employeesTable.id)
+    .notNull(),
+  paymentCategoryId: integer('payment_category_id')
+    .references(() => paymentCategoriesTable.id)
+    .notNull(),
+  effectiveFrom: integer('effective_from', { mode: 'timestamp_ms' }).notNull(),
+  effectiveTo: integer('effective_to', { mode: 'timestamp_ms' }),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  previousRateId: integer('previous_rate_id').references((): AnySQLiteColumn => ratesTable.id),
+});
 
 export const rateAmountSchema = v.pipe(
   v.string('Enter an amount'),

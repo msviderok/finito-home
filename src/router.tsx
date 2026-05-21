@@ -1,13 +1,32 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createRouter as createTanStackRouter } from '@tanstack/react-router';
-import { createTRPCClient, httpBatchLink } from '@trpc/client';
+import { TRPCClientError, createTRPCClient, httpBatchLink } from '@trpc/client';
 import { createTRPCOptionsProxy } from '@trpc/tanstack-react-query';
+import { toast } from 'sonner';
 import superjson from 'superjson';
 import type { AppRouter } from '@/lib/trpc';
 import { routeTree } from './routeTree.gen';
 import { env } from '@/env';
 
+function isTRPCClientError(error: unknown): error is TRPCClientError<AppRouter> {
+  return error instanceof TRPCClientError;
+}
+
+function notifyTRPCError(error: unknown) {
+  if (typeof window === 'undefined' || !isTRPCClientError(error)) return;
+
+  toast.error('Request failed', {
+    description: error.message,
+  });
+}
+
 const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: notifyTRPCError,
+  }),
+  mutationCache: new MutationCache({
+    onError: notifyTRPCError,
+  }),
   defaultOptions: {
     dehydrate: { serializeData: superjson.serialize },
     hydrate: { deserializeData: superjson.deserialize },
