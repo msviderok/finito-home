@@ -10,36 +10,8 @@ export type CategoryRateGroup = {
   rates: CategoryRate[];
 };
 
-type RatePeriod = { effectiveFrom: Date; effectiveTo: Date | null };
-
-export function ratePeriodsOverlap(
-  aFrom: Date,
-  aTo: Date | null | undefined,
-  bFrom: Date,
-  bTo: Date | null | undefined,
-) {
-  const aToMs = aTo?.getTime() ?? Number.POSITIVE_INFINITY;
-  const bToMs = bTo?.getTime() ?? Number.POSITIVE_INFINITY;
-  return aFrom.getTime() < bToMs && bFrom.getTime() < aToMs;
-}
-
-export function rateActiveAt(rate: RatePeriod, at: Date) {
-  return (
-    rate.effectiveFrom.getTime() <= at.getTime() &&
-    (rate.effectiveTo === null || rate.effectiveTo.getTime() > at.getTime())
-  );
-}
-
-export function findSupersededRate<TRate extends RatePeriod & { id: number }>(
-  rates: TRate[],
-  newFrom: Date,
-  newTo: Date | null | undefined,
-) {
-  return rates
-    .filter(
-      (rate) => ratePeriodsOverlap(rate.effectiveFrom, rate.effectiveTo, newFrom, newTo) && rateActiveAt(rate, newFrom),
-    )
-    .sort((a, b) => b.effectiveFrom.getTime() - a.effectiveFrom.getTime())[0];
+function rateEffectiveAt(rate: { effectiveFrom: Date }, at: Date) {
+  return rate.effectiveFrom.getTime() <= at.getTime();
 }
 
 export function groupCategoryRates(rates: CategoryRate[], at: Date = new Date()): CategoryRateGroup[] {
@@ -51,8 +23,8 @@ export function groupCategoryRates(rates: CategoryRate[], at: Date = new Date())
   }
 
   return [...groups.entries()].map(([paymentCategoryId, groupRates]) => {
-    const sortedRates = [...groupRates].sort((a, b) => b.effectiveFrom.getTime() - a.effectiveFrom.getTime());
-    const currentRate = sortedRates.find((rate) => rateActiveAt(rate, at)) ?? sortedRates[0];
+    const sortedRates = [...groupRates].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    const currentRate = sortedRates.find((rate) => rateEffectiveAt(rate, at)) ?? sortedRates[sortedRates.length - 1]!;
     return {
       paymentCategoryId,
       paymentCategory: currentRate.paymentCategory,

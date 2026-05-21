@@ -16,7 +16,6 @@ export const ratesTable = sqliteTable('rates', {
     .references(() => paymentCategoriesTable.id)
     .notNull(),
   effectiveFrom: integer('effective_from', { mode: 'timestamp_ms' }).notNull(),
-  effectiveTo: integer('effective_to', { mode: 'timestamp_ms' }),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
   previousRateId: integer('previous_rate_id').references((): AnySQLiteColumn => ratesTable.id),
 });
@@ -44,7 +43,7 @@ export const rateCreateFormFieldsSchema = v.omit(
   createInsertSchema(ratesTable, {
     amountCents: () => rateAmountSchema,
   }),
-  ['id', 'createdAt', 'effectiveFrom', 'effectiveTo'],
+  ['id', 'createdAt', 'effectiveFrom'],
 );
 
 export function parseRateCreateMutation(

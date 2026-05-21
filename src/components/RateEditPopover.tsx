@@ -85,9 +85,6 @@ export function InlineRateEditor(props: {
                   </Badge>
                 )}
                 <span className="text-muted-foreground tabular-nums">{entry.effectiveFrom.toLocaleDateString()}</span>
-                {entry.effectiveTo && (
-                  <span className="text-muted-foreground tabular-nums">- {entry.effectiveTo.toLocaleDateString()}</span>
-                )}
               </div>
             </li>
           ))}

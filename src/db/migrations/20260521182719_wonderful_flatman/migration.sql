@@ -1,0 +1,1 @@
+ALTER TABLE `rates` DROP COLUMN `effective_to`;
