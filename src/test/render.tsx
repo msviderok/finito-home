@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, type RenderOptions } from '@testing-library/react';
 import type { ReactElement } from 'react';
-import { ViewAsOfProvider } from '@/contexts/view-as-of';
+import { ViewAsOfProvider } from '@/contexts/ViewAsOfProvider';
 import type { CategoryRate } from '@/lib/category-rates';
 import { trpc } from '@/router';
 
@@ -41,7 +41,7 @@ export async function renderPayslipsSection(ui: ReactElement, options: { employe
 }
 
 export async function seedEmployeeCategoryRates(queryClient: QueryClient, employeeId: number, rates: CategoryRate[]) {
-  const queryOptions = trpc.paymentCategories.forEmployee.queryOptions({ employeeId });
+  const queryOptions = trpc.paymentCategories.forEmployee.queryOptions({ employeeId, effectiveDate: new Date() });
   queryClient.setQueryData(queryOptions.queryKey, rates);
   await queryClient.prefetchQuery(queryOptions);
 }

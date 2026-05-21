@@ -1,0 +1,440 @@
+{
+  "id": "b7a0aed0-9841-43a2-89d7-5c810f2cbb8f",
+  "prevIds": ["2d9582dd-d4da-4ad0-afd0-0deb9775718a"],
+  "version": "7",
+  "dialect": "sqlite",
+  "ddl": [
+    {
+      "name": "employees",
+      "entityType": "tables"
+    },
+    {
+      "name": "payment_categories",
+      "entityType": "tables"
+    },
+    {
+      "name": "payslip_line_items",
+      "entityType": "tables"
+    },
+    {
+      "name": "payslips",
+      "entityType": "tables"
+    },
+    {
+      "name": "rates",
+      "entityType": "tables"
+    },
+    {
+      "name": "users",
+      "entityType": "tables"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "employees"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "name",
+      "entityType": "columns",
+      "table": "employees"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "birthday",
+      "entityType": "columns",
+      "table": "employees"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "payment_categories"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "name",
+      "entityType": "columns",
+      "table": "payment_categories"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "payslip_line_items"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "payslip_id",
+      "entityType": "columns",
+      "table": "payslip_line_items"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "payment_category_id",
+      "entityType": "columns",
+      "table": "payslip_line_items"
+    },
+    {
+      "type": "numeric",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "units",
+      "entityType": "columns",
+      "table": "payslip_line_items"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "payment_date",
+      "entityType": "columns",
+      "table": "payslip_line_items"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "payslip_line_items"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "created_by_id",
+      "entityType": "columns",
+      "table": "payslip_line_items"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "payslips"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "employee_id",
+      "entityType": "columns",
+      "table": "payslips"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "payment_date",
+      "entityType": "columns",
+      "table": "payslips"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "payslips"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "created_by_id",
+      "entityType": "columns",
+      "table": "payslips"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "rates"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "amount_cents",
+      "entityType": "columns",
+      "table": "rates"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "employee_id",
+      "entityType": "columns",
+      "table": "rates"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "payment_category_id",
+      "entityType": "columns",
+      "table": "rates"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "effective_from",
+      "entityType": "columns",
+      "table": "rates"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "rates"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "previous_rate_id",
+      "entityType": "columns",
+      "table": "rates"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "name",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "email",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "columns": ["payslip_id"],
+      "tableTo": "payslips",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_payslip_line_items_payslip_id_payslips_id_fk",
+      "entityType": "fks",
+      "table": "payslip_line_items"
+    },
+    {
+      "columns": ["payment_category_id"],
+      "tableTo": "payment_categories",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_payslip_line_items_payment_category_id_payment_categories_id_fk",
+      "entityType": "fks",
+      "table": "payslip_line_items"
+    },
+    {
+      "columns": ["created_by_id"],
+      "tableTo": "users",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_payslip_line_items_created_by_id_users_id_fk",
+      "entityType": "fks",
+      "table": "payslip_line_items"
+    },
+    {
+      "columns": ["employee_id"],
+      "tableTo": "employees",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_payslips_employee_id_employees_id_fk",
+      "entityType": "fks",
+      "table": "payslips"
+    },
+    {
+      "columns": ["created_by_id"],
+      "tableTo": "users",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_payslips_created_by_id_users_id_fk",
+      "entityType": "fks",
+      "table": "payslips"
+    },
+    {
+      "columns": ["employee_id"],
+      "tableTo": "employees",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_rates_employee_id_employees_id_fk",
+      "entityType": "fks",
+      "table": "rates"
+    },
+    {
+      "columns": ["payment_category_id"],
+      "tableTo": "payment_categories",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_rates_payment_category_id_payment_categories_id_fk",
+      "entityType": "fks",
+      "table": "rates"
+    },
+    {
+      "columns": ["previous_rate_id"],
+      "tableTo": "rates",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_rates_previous_rate_id_rates_id_fk",
+      "entityType": "fks",
+      "table": "rates"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "employees_pk",
+      "table": "employees",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "payment_categories_pk",
+      "table": "payment_categories",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "payslip_line_items_pk",
+      "table": "payslip_line_items",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "payslips_pk",
+      "table": "payslips",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "rates_pk",
+      "table": "rates",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "users_pk",
+      "table": "users",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["email"],
+      "nameExplicit": false,
+      "name": "users_email_unique",
+      "entityType": "uniques",
+      "table": "users"
+    }
+  ],
+  "renames": []
+}

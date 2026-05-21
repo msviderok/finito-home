@@ -1,5 +1,5 @@
 import { TriangleAlert } from 'lucide-react';
-import { useViewAsOf } from '@/contexts/view-as-of';
+import { useViewAsOf } from '@/contexts/ViewAsOfProvider';
 
 export function RetroactiveViewBanner() {
   const { isRetroactiveView } = useViewAsOf();

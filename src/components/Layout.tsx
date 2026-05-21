@@ -1,7 +1,7 @@
 import { RetroactiveViewBanner } from './RetroactiveViewBanner';
 import { ThemeToggle } from './ThemeToggle';
 import { ViewAsOfMonthPicker } from './ViewAsOfMonthPicker';
-import { ViewAsOfProvider } from '@/contexts/view-as-of';
+import { ViewAsOfProvider } from '@/contexts/ViewAsOfProvider';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 

@@ -7,6 +7,7 @@ import {
   ratesTable,
   type SelectUser,
 } from '@/db/schema';
+import { findCurrentRateForCategory } from '@/lib/category-rates';
 import { formatCents } from '@/lib/currency';
 import { initTRPC, TRPCError } from '@trpc/server';
 import { type FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch';
@@ -45,7 +46,7 @@ export const appRouter = t.router({
         },
       });
 
-      return employees.map((employee) => toEmployee(employee));
+      return employees.map((employee) => toEmployee(employee)).slice(0, 1);
     }),
 
     get: authedProcedure.input(v.object({ id: v.number() })).query(async ({ ctx, input }) => {
@@ -69,29 +70,44 @@ export const appRouter = t.router({
           orderBy: {
             paymentDate: 'desc',
           },
-          with: payslipWith,
+          with: {
+            lineItems: {
+              with: {
+                paymentCategory: true,
+              },
+            },
+          },
         });
 
-        return payslips.map((payslip) => mapPayslip(payslip));
+        return payslips;
       }),
 
       get: authedProcedure.input(v.object({ id: v.number() })).query(async ({ ctx, input }) => {
         const payslip = await ctx.db.query.payslips.findFirst({
           where: { id: input.id },
-          with: payslipWith,
+          with: {
+            lineItems: {
+              with: {
+                paymentCategory: true,
+              },
+            },
+          },
         });
 
         if (!payslip) {
           throw new TRPCError({ code: 'NOT_FOUND' });
         }
 
-        return mapPayslip(payslip);
+        return payslip;
       }),
 
       create: authedProcedure.input(payslipCreateMutationSchema).mutation(async ({ ctx, input }) => {
         return ctx.db.transaction(async (tx) => {
           const now = new Date();
           const seenCategoryIds = new Set<number>();
+          const employeeRates = await tx.query.rates.findMany({
+            where: { employeeId: input.employeeId },
+          });
           const lineItems = [];
 
           for (const lineItem of input.lineItems) {
@@ -103,17 +119,9 @@ export const appRouter = t.router({
             }
             seenCategoryIds.add(lineItem.paymentCategoryId);
 
-            const rate = await tx.query.rates.findFirst({
-              where: {
-                id: lineItem.rateId,
-              },
-            });
+            const rate = findCurrentRateForCategory(employeeRates, lineItem.paymentCategoryId, input.paymentDate);
 
-            if (
-              !rate ||
-              rate.employeeId !== input.employeeId ||
-              rate.paymentCategoryId !== lineItem.paymentCategoryId
-            ) {
+            if (!rate) {
               throw new TRPCError({
                 code: 'BAD_REQUEST',
                 message: 'Selected payment category rate is not valid for this employee',
@@ -121,10 +129,9 @@ export const appRouter = t.router({
             }
 
             lineItems.push({
-              rateId: lineItem.rateId,
+              paymentCategoryId: lineItem.paymentCategoryId,
               units: lineItem.hours.toFixed(2),
               paymentDate: input.paymentDate,
-              totalAmountCents: Math.round(rate.amountCents * lineItem.hours),
               createdAt: now,
               createdById: ctx.user.id,
             });
@@ -162,31 +169,34 @@ export const appRouter = t.router({
       });
     }),
 
-    forEmployee: authedProcedure.input(v.object({ employeeId: v.number() })).query(async ({ ctx, input }) => {
-      const rates = await ctx.db.query.rates.findMany({
-        where: {
-          employeeId: input.employeeId,
-        },
-        orderBy: {
-          effectiveFrom: 'desc',
-        },
-        with: {
-          paymentCategory: true,
-        },
-      });
-
-      return rates
-        .map((rate) => ({
-          ...rate,
-          paymentCategory: rate.paymentCategory!,
-          amount: formatCents(rate.amountCents),
-        }))
-        .sort((a, b) => {
-          const categoryCompare = a.paymentCategory.name.localeCompare(b.paymentCategory.name);
-          if (categoryCompare !== 0) return categoryCompare;
-          return b.effectiveFrom.getTime() - a.effectiveFrom.getTime();
+    forEmployee: authedProcedure
+      .input(v.object({ employeeId: v.number(), effectiveDate: v.date() }))
+      .query(async ({ ctx, input }) => {
+        const rates = await ctx.db.query.rates.findMany({
+          where: {
+            employeeId: input.employeeId,
+            effectiveFrom: { lte: input.effectiveDate },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+          with: {
+            paymentCategory: true,
+          },
         });
-    }),
+
+        return rates
+          .map((rate) => ({
+            ...rate,
+            paymentCategory: rate.paymentCategory!,
+            amount: formatCents(rate.amountCents),
+          }))
+          .sort((a, b) => {
+            const categoryCompare = a.paymentCategory.name.localeCompare(b.paymentCategory.name);
+            if (categoryCompare !== 0) return categoryCompare;
+            return b.effectiveFrom.getTime() - a.effectiveFrom.getTime();
+          });
+      }),
 
     rates: t.router({
       history: authedProcedure
@@ -236,57 +246,10 @@ export const appRouter = t.router({
   }),
 });
 
-const payslipWith = {
-  lineItems: {
-    with: {
-      rate: {
-        with: {
-          paymentCategory: true,
-        },
-      },
-    },
-  },
-} as const;
-
 function toEmployee(employee: { id: number; name: string; birthday: Date }) {
   return {
     ...employee,
     age: getAge(employee.birthday),
-  };
-}
-
-function mapPayslip<
-  TPayslip extends {
-    lineItems: Array<{
-      units: string;
-      rate: {
-        amountCents: number;
-        paymentCategory: { id: number; name: string } | null;
-      } | null;
-    }>;
-  },
->(payslip: TPayslip) {
-  return {
-    ...payslip,
-    lineItems: payslip.lineItems.map((lineItem) => ({
-      ...lineItem,
-      totalAmount: formatCents(lineItem.rate!.amountCents * Number(lineItem.units)),
-      rate: {
-        ...lineItem.rate!,
-        amount: formatCents(lineItem.rate!.amountCents),
-        paymentCategory: lineItem.rate!.paymentCategory!,
-      },
-    })),
-  } as Omit<TPayslip, 'lineItems'> & {
-    lineItems: Array<
-      TPayslip['lineItems'][number] & {
-        totalAmount: number;
-        rate: NonNullable<TPayslip['lineItems'][number]['rate']> & {
-          amount: number;
-          paymentCategory: NonNullable<NonNullable<TPayslip['lineItems'][number]['rate']>['paymentCategory']>;
-        };
-      }
-    >;
   };
 }
 

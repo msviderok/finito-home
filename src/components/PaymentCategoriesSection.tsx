@@ -1,20 +1,19 @@
-import { useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
-import { useViewAsOf } from '@/contexts/view-as-of';
+import { useViewAsOf } from '@/contexts/ViewAsOfProvider';
 import { groupCategoryRates } from '@/lib/category-rates';
 import { formatCurrency } from '@/lib/currency';
 import { trpc } from '@/router';
-import { InlineRateEditor } from './RateEditPopover';
+import { useQuery } from '@tanstack/react-query';
 import type { CreateRateHandler } from './RateEditPopover';
+import { InlineRateEditor } from './RateEditPopover';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { Badge } from './ui/badge';
 
 export function PaymentCategoriesSection(props: { employeeId: number; onCreateRate: CreateRateHandler }) {
   const { viewAsOfAt } = useViewAsOf();
   const { data: categoryRates = [] } = useQuery(
-    trpc.paymentCategories.forEmployee.queryOptions({ employeeId: props.employeeId }),
+    trpc.paymentCategories.forEmployee.queryOptions({ employeeId: props.employeeId, effectiveDate: viewAsOfAt }),
   );
-  const categoryGroups = useMemo(() => groupCategoryRates(categoryRates, viewAsOfAt), [categoryRates, viewAsOfAt]);
+  const categoryGroups = groupCategoryRates(categoryRates, viewAsOfAt);
 
   return (
     <section className="flex flex-col gap-2">
@@ -43,15 +42,12 @@ export function PaymentCategoryAccordionItem(props: {
 }) {
   return (
     <AccordionItem value={`category-${props.group.paymentCategoryId}`}>
-      <AccordionTrigger className="items-center">
-        <span className="font-medium">{props.group.paymentCategory.name}</span>
-        <span className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
-          <span className="text-muted-foreground tabular-nums">{formatCurrency(props.group.currentRate.amount)}</span>
-          <span className="text-muted-foreground tabular-nums">
-            {props.group.currentRate.effectiveFrom.toLocaleDateString()}
-          </span>
+      <AccordionTrigger className="flex items-center">
+        <span className="flex items-center gap-2">
+          <span className="font-medium">{props.group.paymentCategory.name}</span>
           <Badge>Current</Badge>
         </span>
+        <span className="text-muted-foreground tabular-nums">{formatCurrency(props.group.currentRate.amount)}</span>
       </AccordionTrigger>
       <AccordionContent>
         <InlineRateEditor

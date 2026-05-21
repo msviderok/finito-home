@@ -14,6 +14,22 @@ function rateEffectiveAt(rate: { effectiveFrom: Date }, at: Date) {
   return rate.effectiveFrom.getTime() <= at.getTime();
 }
 
+export function findCurrentRateForCategory(
+  rates: Array<Pick<CategoryRate, 'paymentCategoryId' | 'effectiveFrom'>>,
+  paymentCategoryId: number,
+  at: Date = new Date(),
+) {
+  const categoryRates = rates.filter(
+    (rate) => rate.paymentCategoryId === paymentCategoryId && rateEffectiveAt(rate, at),
+  );
+  if (categoryRates.length === 0) return undefined;
+  return categoryRates.sort((a, b) => b.effectiveFrom.getTime() - a.effectiveFrom.getTime())[0];
+}
+
+export function getCategoryGroupAt(groups: CategoryRateGroup[], paymentCategoryId: number) {
+  return groups.find((group) => group.paymentCategoryId === paymentCategoryId);
+}
+
 export function groupCategoryRates(rates: CategoryRate[], at: Date = new Date()): CategoryRateGroup[] {
   const groups = new Map<number, CategoryRate[]>();
   for (const rate of rates) {

@@ -25,7 +25,10 @@ export const relations = defineRelations(
     },
     payslipLineItems: {
       payslip: r.one.payslips({ from: r.payslipLineItems.payslipId, to: r.payslips.id }),
-      rate: r.one.rates({ from: r.payslipLineItems.rateId, to: r.rates.id }),
+      paymentCategory: r.one.paymentCategories({
+        from: r.payslipLineItems.paymentCategoryId,
+        to: r.paymentCategories.id,
+      }),
       createdBy: r.one.users({ from: r.payslipLineItems.createdById, to: r.users.id }),
     },
     payslips: {

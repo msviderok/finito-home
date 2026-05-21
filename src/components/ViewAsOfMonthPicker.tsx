@@ -1,6 +1,6 @@
 import { CalendarDays } from 'lucide-react';
 import { formatMonthInputValue } from '@/lib/view-as-of-date';
-import { useViewAsOf } from '@/contexts/view-as-of';
+import { useViewAsOf } from '@/contexts/ViewAsOfProvider';
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from './ui/input-group';
 
 export function ViewAsOfMonthPicker() {

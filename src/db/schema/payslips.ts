@@ -44,7 +44,6 @@ export function isValidHoursInput(value: string) {
 
 export const payslipDraftLineItemFormSchema = v.object({
   paymentCategoryId: v.number(),
-  rateId: v.number(),
   hours: v.pipe(
     v.string('Enter billable hours'),
     v.nonEmpty('Enter billable hours'),
@@ -69,12 +68,11 @@ export const payslipDraftFormSchema = v.pipe(
 
 export const payslipCreateMutationSchema = v.object({
   employeeId: v.number(),
-  paymentDate: v.date('Enter a payment date'),
+  paymentDate: v.date(),
   lineItems: v.pipe(
     v.array(
       v.object({
         paymentCategoryId: v.number(),
-        rateId: v.number(),
         hours: v.pipe(v.number(), v.minValue(0.01, 'Enter valid billable hours')),
       }),
     ),

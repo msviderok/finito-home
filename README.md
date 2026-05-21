@@ -9,3 +9,4 @@
 - If in future any payslip can be edited by other users, then payslipLineItems should have the created_by_id as well.
 - For real user management, we need to set up a proper authentication and authorization system with TRPC's protected procedure.
 - If I had more time, I would have added an ability to change any related entity from the form of any other related entity.
+- To emit unnecessary front-end related stuff, there might be a potential to notify the server via cookies about the view-as-of date.

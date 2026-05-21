@@ -41,7 +41,6 @@ describe('create payslip', () => {
       lineItems: [
         {
           paymentCategoryId: 1,
-          rateId: 1,
           hours: 8,
         },
       ],

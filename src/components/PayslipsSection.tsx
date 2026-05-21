@@ -1,10 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { Field, FieldArray, Form, getInput, insert, remove, useForm } from '@formisch/react';
 import { Plus, Trash2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { payslipDraftFormSchema, sanitizeHoursInput } from '@/db/schema/payslips';
-import { useViewAsOf } from '@/contexts/view-as-of';
-import { groupCategoryRates } from '@/lib/category-rates';
+import { getCategoryGroupAt, groupCategoryRates } from '@/lib/category-rates';
 import { formatCurrency } from '@/lib/currency';
 import { trpc } from '@/router';
 import type { CreatePayslipHandler } from './EmployeePayrollAccordion';
@@ -14,11 +13,11 @@ import { Button } from './ui/button';
 import { Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList } from './ui/combobox';
 import { Input } from './ui/input';
 import { Separator } from './ui/separator';
+import { useViewAsOf } from '@/contexts/ViewAsOfProvider';
 
 type CategoryOption = {
   value: number;
   label: string;
-  rateId: number;
   rateAmount: number;
 };
 
@@ -51,7 +50,7 @@ export function PayslipsSection(props: { employeeId: number; onCreatePayslip: Cr
       ) : (
         <Accordion multiple>
           {payslips.map((payslip) => (
-            <PayslipAccordionItem key={payslip.id} payslipId={payslip.id} />
+            <PayslipAccordionItem key={payslip.id} payslipId={payslip.id} employeeId={props.employeeId} />
           ))}
         </Accordion>
       )}
@@ -59,12 +58,20 @@ export function PayslipsSection(props: { employeeId: number; onCreatePayslip: Cr
   );
 }
 
-export function PayslipAccordionItem(props: { payslipId: number }) {
+export function PayslipAccordionItem(props: { payslipId: number; employeeId: number }) {
+  const { viewAsOfAt } = useViewAsOf();
   const { data: payslip } = useQuery(trpc.employees.payslips.get.queryOptions({ id: props.payslipId }));
+  const { data: categoryRates = [] } = useQuery(
+    trpc.paymentCategories.forEmployee.queryOptions({ employeeId: props.employeeId, effectiveDate: viewAsOfAt }),
+  );
+  const categoryGroups = payslip ? groupCategoryRates(categoryRates, payslip.paymentDate) : [];
 
   if (!payslip) return null;
 
-  const total = payslip.lineItems.reduce((sum, lineItem) => sum + lineItem.totalAmount, 0);
+  const total = payslip.lineItems.reduce((sum, lineItem) => {
+    const group = getCategoryGroupAt(categoryGroups, lineItem.paymentCategoryId);
+    return sum + (group ? group.currentRate.amount * Number(lineItem.units) : 0);
+  }, 0);
 
   return (
     <AccordionItem value={`payslip-${payslip.id}`}>
@@ -77,17 +84,23 @@ export function PayslipAccordionItem(props: { payslipId: number }) {
       </AccordionTrigger>
       <AccordionContent>
         <div className="flex flex-col gap-2">
-          {payslip.lineItems.map((lineItem) => (
-            <div
-              key={lineItem.id}
-              className="grid gap-2 rounded-md border px-2 py-1.5 sm:grid-cols-[1fr_auto_auto_auto]"
-            >
-              <span className="font-medium">{lineItem.rate.paymentCategory.name}</span>
-              <span className="text-muted-foreground tabular-nums">{Number(lineItem.units).toFixed(2)} hours</span>
-              <span className="text-muted-foreground tabular-nums">{formatCurrency(lineItem.rate.amount)}/hr</span>
-              <span className="font-medium tabular-nums">{formatCurrency(lineItem.totalAmount)}</span>
-            </div>
-          ))}
+          {payslip.lineItems.map((lineItem) => {
+            const group = getCategoryGroupAt(categoryGroups, lineItem.paymentCategoryId);
+            const lineTotal = group ? group.currentRate.amount * Number(lineItem.units) : 0;
+            return (
+              <div
+                key={lineItem.id}
+                className="grid gap-2 rounded-md border px-2 py-1.5 sm:grid-cols-[1fr_auto_auto_auto]"
+              >
+                <span className="font-medium">{lineItem.paymentCategory?.name ?? 'Payment category'}</span>
+                <span className="text-muted-foreground tabular-nums">{Number(lineItem.units).toFixed(2)} hours</span>
+                <span className="text-muted-foreground tabular-nums">
+                  {group ? `${formatCurrency(group.currentRate.amount)}/hr` : '—'}
+                </span>
+                <span className="font-medium tabular-nums">{formatCurrency(lineTotal)}</span>
+              </div>
+            );
+          })}
           <Separator />
           <div className="flex justify-end gap-3 font-semibold">
             <span>Total</span>
@@ -100,11 +113,9 @@ export function PayslipAccordionItem(props: { payslipId: number }) {
 }
 
 function AddPayslipForm(props: { employeeId: number; onCreatePayslip: CreatePayslipHandler }) {
-  const { viewAsOfAt } = useViewAsOf();
   const { data: categoryRates = [] } = useQuery(
-    trpc.paymentCategories.forEmployee.queryOptions({ employeeId: props.employeeId }),
+    trpc.paymentCategories.forEmployee.queryOptions({ employeeId: props.employeeId, effectiveDate: new Date() }),
   );
-  const categoryGroups = useMemo(() => groupCategoryRates(categoryRates, viewAsOfAt), [categoryRates, viewAsOfAt]);
   const form = useForm({
     schema: payslipDraftFormSchema,
     initialInput: {
@@ -115,10 +126,12 @@ function AddPayslipForm(props: { employeeId: number; onCreatePayslip: CreatePays
     validate: 'submit',
     revalidate: 'input',
   });
+  const paymentDate = getInput(form, { path: ['paymentDate'] });
+  const at = paymentDate instanceof Date && !Number.isNaN(paymentDate.getTime()) ? paymentDate : new Date();
+  const categoryGroups = groupCategoryRates(categoryRates ?? [], at);
   const categoryOptions = categoryGroups.map((group) => ({
     value: group.paymentCategoryId,
     label: group.paymentCategory.name,
-    rateId: group.currentRate.id,
     rateAmount: group.currentRate.amount,
   }));
 
@@ -166,7 +179,6 @@ function AddPayslipForm(props: { employeeId: number; onCreatePayslip: CreatePays
                       path: ['lineItems'],
                       initialInput: {
                         paymentCategoryId: option.value,
-                        rateId: option.rateId,
                         hours: '',
                       },
                     });
@@ -261,9 +273,6 @@ function DraftLineItemRow(props: {
         return (
           <div className="grid items-end gap-2 rounded-md border px-2 py-2 sm:grid-cols-[1fr_auto_8rem_auto_auto]">
             <input {...categoryField.props} type="hidden" value={String(categoryField.input ?? '')} />
-            <Field of={props.form} path={['lineItems', props.index, 'rateId']}>
-              {(rateField) => <input {...rateField.props} type="hidden" value={String(rateField.input ?? '')} />}
-            </Field>
             <div className="flex flex-col gap-0.5">
               <span className="font-medium">{category?.label ?? 'Payment category'}</span>
               <span className="text-muted-foreground tabular-nums">
