@@ -1,8 +1,9 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { HeadContent, Scripts, createRootRouteWithContext } from '@tanstack/react-router';
 import type { TRPCOptionsProxy } from '@trpc/tanstack-react-query';
-import type { AppRouter } from '@/lib/trpc.init';
+import type { AppRouter } from '@/lib/trpc';
 import appCss from '@/styles.css?url';
+import Layout from '@/components/Layout';
 
 interface MyRouterContext {
   queryClient: QueryClient;
@@ -29,12 +30,12 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
 function RootDocument(props: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         <HeadContent />
       </head>
       <body>
-        {props.children}
+        <Layout>{props.children}</Layout>
         <Scripts />
       </body>
     </html>

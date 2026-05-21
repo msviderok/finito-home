@@ -1,8 +1,9 @@
 import tailwindcss from '@tailwindcss/vite';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
-import viteReact from '@vitejs/plugin-react';
+import viteReact, { reactCompilerPreset } from '@vitejs/plugin-react';
 import { nitro } from 'nitro/vite';
 import { defineConfig } from 'vite-plus';
+import babel from '@rolldown/plugin-babel';
 
 const config = defineConfig({
   staged: {
@@ -28,7 +29,7 @@ const config = defineConfig({
     sortPackageJson: false,
     ignorePatterns: ['package-lock.json', 'pnpm-lock.yaml', 'yarn.lock'],
   },
-  plugins: [nitro(), tailwindcss(), tanstackStart({}), viteReact()],
+  plugins: [nitro(), tailwindcss(), tanstackStart({}), viteReact(), babel({ presets: [reactCompilerPreset()] })],
   resolve: {
     tsconfigPaths: true,
   },

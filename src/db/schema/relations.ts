@@ -1,13 +1,20 @@
 import { defineRelations } from 'drizzle-orm';
-import { employees } from './employees';
-import { paymentCategories } from './paymentCategories';
-import { payslipLineItems } from './payslipLineItems';
-import { payslips } from './payslips';
-import { rates } from './rates';
-import { users } from './users';
+import { employeesTable } from './employees';
+import { paymentCategoriesTable } from './paymentCategories';
+import { payslipLineItemsTable } from './payslipLineItems';
+import { payslipsTable } from './payslips';
+import { ratesTable } from './rates';
+import { usersTable } from './users';
 
 export const relations = defineRelations(
-  { employees, paymentCategories, payslipLineItems, payslips, rates, users },
+  {
+    employees: employeesTable,
+    paymentCategories: paymentCategoriesTable,
+    payslipLineItems: payslipLineItemsTable,
+    payslips: payslipsTable,
+    rates: ratesTable,
+    users: usersTable,
+  },
   (r) => ({
     employees: {
       categoryRates: r.many.rates({ from: r.employees.id, to: r.rates.employeeId }),

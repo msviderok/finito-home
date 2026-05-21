@@ -7,3 +7,4 @@
 - For simplicity, the payslip is going to be stored and executed monthly, but for more complex scenarios, custom payslip cadence should be provided.
 - We will use cents for the currency-related amounts to ensure there is no problem with the floating math.
 - If in future any payslip can be edited by other users, then payslipLineItems should have the created_by_id as well.
+- For real user management, we need to set up a proper authentication and authorization system with TRPC's protected procedure.

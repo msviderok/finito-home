@@ -44,6 +44,8 @@
     "valibot": "catalog:"
   },
   "devDependencies": {
+    "@babel/core": "catalog:",
+    "@rolldown/plugin-babel": "catalog:",
     "@stylistic/eslint-plugin": "catalog:",
     "@tanstack/devtools-vite": "catalog:",
     "@tanstack/eslint-config": "catalog:",
@@ -53,6 +55,7 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
+    "babel-plugin-react-compiler": "catalog:",
     "drizzle-kit": "catalog:",
     "eslint-plugin-import-x": "catalog:",
     "eslint-plugin-n": "catalog:",

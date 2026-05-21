@@ -1,20 +1,20 @@
 import { db } from '.';
-import { users } from './schema/users';
-import { employees } from './schema/employees';
-import { rates } from './schema/rates';
-import { paymentCategories } from './schema/paymentCategories';
+import { usersTable } from './schema/users';
+import { employeesTable } from './schema/employees';
+import { ratesTable } from './schema/rates';
+import { paymentCategoriesTable } from './schema/paymentCategories';
 
 async function main() {
   await db.transaction(async (tx) => {
-    await tx.insert(users).values([{ name: 'Admin User', email: 'admin@example.com' }]);
+    await tx.insert(usersTable).values([{ name: 'Admin User', email: 'admin@example.com' }]);
 
     const createdCategories = await tx
-      .insert(paymentCategories)
+      .insert(paymentCategoriesTable)
       .values([{ name: 'Hourly Rate' }, { name: 'Overtime Hourly' }, { name: 'Commission' }, { name: 'Global Pay' }])
       .returning();
 
     const createdEmployees = await tx
-      .insert(employees)
+      .insert(employeesTable)
       .values([
         { name: 'Alice Johnson', birthday: new Date('1988-04-12') },
         { name: 'Ben Carter', birthday: new Date('1992-09-03') },
@@ -24,7 +24,7 @@ async function main() {
       ])
       .returning();
 
-    await tx.insert(rates).values(
+    await tx.insert(ratesTable).values(
       createdEmployees.flatMap((employee, employeeIndex) =>
         createdCategories.slice(0, 3).map((category, categoryIndex) => ({
           employeeId: employee.id,

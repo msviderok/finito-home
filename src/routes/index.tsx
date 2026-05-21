@@ -1,27 +1,71 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-import { useMutation } from '@tanstack/react-query';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { trpc } from '@/router';
+import { useQuery } from '@tanstack/react-query';
+import { createFileRoute } from '@tanstack/react-router';
+import { Edit2 } from 'lucide-react';
 
 export const Route = createFileRoute('/')({
   component: App,
 });
 
 function App() {
-  const { mutate: trigger, data } = useMutation(trpc.trigger.mutationOptions());
+  const { data = [] } = useQuery(trpc.listEmployees.queryOptions());
+
   return (
-    <div className="flex min-h-svh p-6">
-      <div className="flex max-w-md min-w-0 flex-col gap-4 text-sm leading-loose">
-        <div className="flex flex-col gap-2">
-          <h1 className="font-medium">Project ready!</h1>
-          <p>You may now add components and start building.</p>
-          <p>We&apos;ve already added the button component for you.</p>
-          <Button className="mt-2" onClick={() => trigger({ date: new Date() })}>
-            Trigger TRPC endpoint
-          </Button>
-          <span>Last response: {data}</span>
-        </div>
-      </div>
+    <div className="flex p-6">
+      <Accordion multiple className="max-w-lg" value={[data[0]?.id]}>
+        {data.map((employee) => (
+          <AccordionItem key={employee.id} value={employee.id}>
+            <AccordionTrigger>{employee.name}</AccordionTrigger>
+            <AccordionContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Payment category</TableHead>
+                    <TableHead className="flex items-center gap-0.5">
+                      Rate <span className="text-muted-foreground">($/hr)</span>
+                    </TableHead>
+                    <TableHead>Effective from</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {employee.categoryRates.map((rate) => (
+                    <TableRow key={rate.id}>
+                      <TableCell>{rate.paymentCategory.name}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Tooltip>
+                            <TooltipTrigger
+                              render={
+                                <Button size="icon-xs">
+                                  <Edit2 className="size-3" />
+                                </Button>
+                              }
+                            />
+
+                            <TooltipContent align="start">
+                              <p>Edit rate</p>
+                            </TooltipContent>
+                          </Tooltip>
+                          <div className="text-sm font-medium">{formatCurrency(rate.amount)}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{rate.effectiveFrom.toLocaleDateString()}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
     </div>
   );
+}
+
+function formatCurrency(amount: number) {
+  return Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 }
