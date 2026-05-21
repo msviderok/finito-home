@@ -1,9 +1,12 @@
+import { useQuery } from '@tanstack/react-query';
 import { Field, FieldArray, Form, getInput, insert, remove, useForm } from '@formisch/react';
 import { Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { payslipDraftFormSchema, sanitizeHoursInput } from '@/db/schema/payslips';
+import { groupCategoryRates } from '@/lib/category-rates';
 import { formatCurrency } from '@/lib/currency';
-import type { CategoryRateGroup, CreatePayslipHandler, Employee } from './EmployeePayrollAccordion';
+import { trpc } from '@/router';
+import type { CreatePayslipHandler } from './EmployeePayrollAccordion';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -18,12 +21,9 @@ type CategoryOption = {
   rateAmount: number;
 };
 
-export function PayslipsSection(props: {
-  employee: Employee;
-  categoryGroups: CategoryRateGroup[];
-  onCreatePayslip: CreatePayslipHandler;
-}) {
+export function PayslipsSection(props: { employeeId: number; onCreatePayslip: CreatePayslipHandler }) {
   const [showForm, setShowForm] = useState(false);
+  const { data: payslips = [] } = useQuery(trpc.employees.payslips.list.queryOptions({ employeeId: props.employeeId }));
 
   return (
     <section className="flex flex-col gap-2">
@@ -37,8 +37,7 @@ export function PayslipsSection(props: {
 
       {showForm && (
         <AddPayslipForm
-          employee={props.employee}
-          categoryGroups={props.categoryGroups}
+          employeeId={props.employeeId}
           onCreatePayslip={async (input) => {
             await props.onCreatePayslip(input);
             setShowForm(false);
@@ -46,12 +45,12 @@ export function PayslipsSection(props: {
         />
       )}
 
-      {props.employee.payslips.length === 0 ? (
+      {payslips.length === 0 ? (
         <p className="rounded-md border border-dashed p-3 text-muted-foreground">No pay slips yet.</p>
       ) : (
         <Accordion multiple>
-          {props.employee.payslips.map((payslip) => (
-            <PayslipAccordionItem key={payslip.id} payslip={payslip} />
+          {payslips.map((payslip) => (
+            <PayslipAccordionItem key={payslip.id} payslipId={payslip.id} />
           ))}
         </Accordion>
       )}
@@ -59,21 +58,25 @@ export function PayslipsSection(props: {
   );
 }
 
-export function PayslipAccordionItem(props: { payslip: Employee['payslips'][number] }) {
-  const total = props.payslip.lineItems.reduce((sum, lineItem) => sum + lineItem.totalAmount, 0);
+export function PayslipAccordionItem(props: { payslipId: number }) {
+  const { data: payslip } = useQuery(trpc.employees.payslips.get.queryOptions({ id: props.payslipId }));
+
+  if (!payslip) return null;
+
+  const total = payslip.lineItems.reduce((sum, lineItem) => sum + lineItem.totalAmount, 0);
 
   return (
-    <AccordionItem value={`payslip-${props.payslip.id}`}>
+    <AccordionItem value={`payslip-${payslip.id}`}>
       <AccordionTrigger className="items-center">
-        <span className="font-medium tabular-nums">{props.payslip.paymentDate.toLocaleDateString()}</span>
+        <span className="font-medium tabular-nums">{payslip.paymentDate.toLocaleDateString()}</span>
         <span className="ml-auto flex items-center gap-1.5 text-muted-foreground">
-          <Badge variant="outline">{props.payslip.lineItems.length} lines</Badge>
+          <Badge variant="outline">{payslip.lineItems.length} lines</Badge>
           <span className="font-medium tabular-nums">{formatCurrency(total)}</span>
         </span>
       </AccordionTrigger>
       <AccordionContent>
         <div className="flex flex-col gap-2">
-          {props.payslip.lineItems.map((lineItem) => (
+          {payslip.lineItems.map((lineItem) => (
             <div
               key={lineItem.id}
               className="grid gap-2 rounded-md border px-2 py-1.5 sm:grid-cols-[1fr_auto_auto_auto]"
@@ -95,22 +98,22 @@ export function PayslipAccordionItem(props: { payslip: Employee['payslips'][numb
   );
 }
 
-function AddPayslipForm(props: {
-  employee: Employee;
-  categoryGroups: CategoryRateGroup[];
-  onCreatePayslip: CreatePayslipHandler;
-}) {
+function AddPayslipForm(props: { employeeId: number; onCreatePayslip: CreatePayslipHandler }) {
+  const { data: categoryRates = [] } = useQuery(
+    trpc.paymentCategories.forEmployee.queryOptions({ employeeId: props.employeeId }),
+  );
+  const categoryGroups = useMemo(() => groupCategoryRates(categoryRates), [categoryRates]);
   const form = useForm({
     schema: payslipDraftFormSchema,
     initialInput: {
-      employeeId: props.employee.id,
+      employeeId: props.employeeId,
       paymentDate: new Date(),
       lineItems: [],
     },
     validate: 'submit',
     revalidate: 'input',
   });
-  const categoryOptions = props.categoryGroups.map((group) => ({
+  const categoryOptions = categoryGroups.map((group) => ({
     value: group.paymentCategoryId,
     label: group.paymentCategory.name,
     rateId: group.currentRate.id,

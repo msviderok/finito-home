@@ -37,76 +37,135 @@ const authedProcedure = t.procedure.use(async ({ ctx, next }) => {
 
 export type AppRouter = typeof appRouter;
 export const appRouter = t.router({
-  listEmployees: authedProcedure.query(async ({ ctx }) => {
-    const employees = await ctx.db.query.employees.findMany({
-      orderBy: {
-        name: 'asc',
-      },
-      with: {
-        categoryRates: {
-          with: {
-            paymentCategory: true,
-          },
+  employees: t.router({
+    list: authedProcedure.query(async ({ ctx }) => {
+      const employees = await ctx.db.query.employees.findMany({
+        orderBy: {
+          name: 'asc',
         },
-        payslips: {
-          with: {
-            lineItems: {
-              with: {
-                rate: {
-                  with: {
-                    paymentCategory: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
+      });
 
-    return employees.map((employee) => ({
-      ...employee,
-      age: getAge(employee.birthday),
-      categoryRates: employee.categoryRates
-        .map((categoryRate) => ({
-          ...categoryRate,
-          paymentCategory: categoryRate.paymentCategory!,
-          amount: formatCents(categoryRate.amountCents),
-        }))
-        .sort((a, b) => {
-          const categoryCompare = a.paymentCategory.name.localeCompare(b.paymentCategory.name);
-          if (categoryCompare !== 0) return categoryCompare;
-          return b.effectiveFrom.getTime() - a.effectiveFrom.getTime();
-        }),
-      payslips: employee.payslips
-        .map((payslip) => ({
-          ...payslip,
-          lineItems: payslip.lineItems.map((lineItem) => ({
-            ...lineItem,
-            totalAmount: formatCents(lineItem.rate!.amountCents * Number(lineItem.units)),
-            rate: {
-              ...lineItem.rate!,
-              amount: formatCents(lineItem.rate!.amountCents),
-              paymentCategory: lineItem.rate!.paymentCategory!,
-            },
-          })),
-        }))
-        .sort((a, b) => b.paymentDate.getTime() - a.paymentDate.getTime()),
-    }));
+      return employees.map((employee) => toEmployee(employee));
+    }),
+
+    get: authedProcedure.input(v.object({ id: v.number() })).query(async ({ ctx, input }) => {
+      const employee = await ctx.db.query.employees.findFirst({
+        where: { id: input.id },
+      });
+
+      if (!employee) {
+        throw new TRPCError({ code: 'NOT_FOUND' });
+      }
+
+      return toEmployee(employee);
+    }),
+
+    payslips: t.router({
+      list: authedProcedure.input(v.object({ employeeId: v.number() })).query(async ({ ctx, input }) => {
+        const payslips = await ctx.db.query.payslips.findMany({
+          where: {
+            employeeId: input.employeeId,
+          },
+          orderBy: {
+            paymentDate: 'desc',
+          },
+          with: payslipWith,
+        });
+
+        return payslips.map((payslip) => mapPayslip(payslip));
+      }),
+
+      get: authedProcedure.input(v.object({ id: v.number() })).query(async ({ ctx, input }) => {
+        const payslip = await ctx.db.query.payslips.findFirst({
+          where: { id: input.id },
+          with: payslipWith,
+        });
+
+        if (!payslip) {
+          throw new TRPCError({ code: 'NOT_FOUND' });
+        }
+
+        return mapPayslip(payslip);
+      }),
+
+      create: authedProcedure.input(payslipCreateMutationSchema).mutation(async ({ ctx, input }) => {
+        return ctx.db.transaction(async (tx) => {
+          const now = new Date();
+          const seenCategoryIds = new Set<number>();
+          const lineItems = [];
+
+          for (const lineItem of input.lineItems) {
+            if (seenCategoryIds.has(lineItem.paymentCategoryId)) {
+              throw new TRPCError({
+                code: 'BAD_REQUEST',
+                message: 'Each payment category can only be added once',
+              });
+            }
+            seenCategoryIds.add(lineItem.paymentCategoryId);
+
+            const rate = await tx.query.rates.findFirst({
+              where: {
+                id: lineItem.rateId,
+              },
+            });
+
+            if (
+              !rate ||
+              rate.employeeId !== input.employeeId ||
+              rate.paymentCategoryId !== lineItem.paymentCategoryId
+            ) {
+              throw new TRPCError({
+                code: 'BAD_REQUEST',
+                message: 'Selected payment category rate is not valid for this employee',
+              });
+            }
+
+            lineItems.push({
+              rateId: lineItem.rateId,
+              units: lineItem.hours.toFixed(2),
+              paymentDate: input.paymentDate,
+              totalAmountCents: Math.round(rate.amountCents * lineItem.hours),
+              createdAt: now,
+              createdById: ctx.user.id,
+            });
+          }
+
+          const [payslip] = await tx
+            .insert(payslipsTable)
+            .values({
+              employeeId: input.employeeId,
+              paymentDate: input.paymentDate,
+              createdAt: now,
+              createdById: ctx.user.id,
+            })
+            .returning();
+
+          await tx.insert(payslipLineItemsTable).values(
+            lineItems.map((lineItem) => ({
+              ...lineItem,
+              payslipId: payslip.id,
+            })),
+          );
+
+          return { id: payslip.id };
+        });
+      }),
+    }),
   }),
 
-  getRateHistory: authedProcedure
-    .input(
-      v.object({
-        employeeId: v.number(),
-        paymentCategoryId: v.number(),
-      }),
-    )
-    .query(async ({ ctx, input }) => {
+  paymentCategories: t.router({
+    list: authedProcedure.query(async ({ ctx }) => {
+      return ctx.db.query.paymentCategories.findMany({
+        orderBy: {
+          name: 'asc',
+        },
+      });
+    }),
+
+    forEmployee: authedProcedure.input(v.object({ employeeId: v.number() })).query(async ({ ctx, input }) => {
       const rates = await ctx.db.query.rates.findMany({
         where: {
           employeeId: input.employeeId,
-          paymentCategoryId: input.paymentCategoryId,
         },
         orderBy: {
           effectiveFrom: 'desc',
@@ -116,85 +175,116 @@ export const appRouter = t.router({
         },
       });
 
-      return rates.map((entry) => ({
-        ...entry,
-        paymentCategory: entry.paymentCategory!,
-        amount: formatCents(entry.amountCents),
-      }));
+      return rates
+        .map((rate) => ({
+          ...rate,
+          paymentCategory: rate.paymentCategory!,
+          amount: formatCents(rate.amountCents),
+        }))
+        .sort((a, b) => {
+          const categoryCompare = a.paymentCategory.name.localeCompare(b.paymentCategory.name);
+          if (categoryCompare !== 0) return categoryCompare;
+          return b.effectiveFrom.getTime() - a.effectiveFrom.getTime();
+        });
     }),
 
-  createRate: authedProcedure.input(rateCreateMutationSchema).mutation(async ({ ctx, input }) => {
-    const data = await ctx.db.insert(ratesTable).values({
-      employeeId: input.employeeId,
-      paymentCategoryId: input.paymentCategoryId,
-      amountCents: Math.round(input.amount * 100),
-      effectiveFrom: input.effectiveFrom,
-      createdAt: new Date(),
-      previousRateId: input.previousRateId,
-      effectiveTo: input.effectiveTo,
-    });
-    console.log(data);
-  }),
-
-  createPayslip: authedProcedure.input(payslipCreateMutationSchema).mutation(async ({ ctx, input }) => {
-    return ctx.db.transaction(async (tx) => {
-      const now = new Date();
-      const seenCategoryIds = new Set<number>();
-      const lineItems = [];
-
-      for (const lineItem of input.lineItems) {
-        if (seenCategoryIds.has(lineItem.paymentCategoryId)) {
-          throw new TRPCError({
-            code: 'BAD_REQUEST',
-            message: 'Each payment category can only be added once',
+    rates: t.router({
+      history: authedProcedure
+        .input(
+          v.object({
+            employeeId: v.number(),
+            paymentCategoryId: v.number(),
+          }),
+        )
+        .query(async ({ ctx, input }) => {
+          const rates = await ctx.db.query.rates.findMany({
+            where: {
+              employeeId: input.employeeId,
+              paymentCategoryId: input.paymentCategoryId,
+            },
+            orderBy: {
+              effectiveFrom: 'desc',
+            },
+            with: {
+              paymentCategory: true,
+            },
           });
-        }
-        seenCategoryIds.add(lineItem.paymentCategoryId);
 
-        const rate = await tx.query.rates.findFirst({
-          where: {
-            id: lineItem.rateId,
-          },
-        });
+          return rates.map((entry) => ({
+            ...entry,
+            paymentCategory: entry.paymentCategory!,
+            amount: formatCents(entry.amountCents),
+          }));
+        }),
 
-        if (!rate || rate.employeeId !== input.employeeId || rate.paymentCategoryId !== lineItem.paymentCategoryId) {
-          throw new TRPCError({
-            code: 'BAD_REQUEST',
-            message: 'Selected payment category rate is not valid for this employee',
-          });
-        }
-
-        lineItems.push({
-          rateId: lineItem.rateId,
-          units: lineItem.hours.toFixed(2),
-          paymentDate: input.paymentDate,
-          totalAmountCents: Math.round(rate.amountCents * lineItem.hours),
-          createdAt: now,
-          createdById: ctx.user.id,
-        });
-      }
-
-      const [payslip] = await tx
-        .insert(payslipsTable)
-        .values({
+      create: authedProcedure.input(rateCreateMutationSchema).mutation(async ({ ctx, input }) => {
+        await ctx.db.insert(ratesTable).values({
           employeeId: input.employeeId,
-          paymentDate: input.paymentDate,
-          createdAt: now,
-          createdById: ctx.user.id,
-        })
-        .returning();
-
-      await tx.insert(payslipLineItemsTable).values(
-        lineItems.map((lineItem) => ({
-          ...lineItem,
-          payslipId: payslip.id,
-        })),
-      );
-
-      return { id: payslip.id };
-    });
+          paymentCategoryId: input.paymentCategoryId,
+          amountCents: Math.round(input.amount * 100),
+          effectiveFrom: input.effectiveFrom,
+          createdAt: new Date(),
+          previousRateId: input.previousRateId,
+          effectiveTo: input.effectiveTo,
+        });
+      }),
+    }),
   }),
 });
+
+const payslipWith = {
+  lineItems: {
+    with: {
+      rate: {
+        with: {
+          paymentCategory: true,
+        },
+      },
+    },
+  },
+} as const;
+
+function toEmployee(employee: { id: number; name: string; birthday: Date }) {
+  return {
+    ...employee,
+    age: getAge(employee.birthday),
+  };
+}
+
+function mapPayslip<
+  TPayslip extends {
+    lineItems: Array<{
+      units: string;
+      rate: {
+        amountCents: number;
+        paymentCategory: { id: number; name: string } | null;
+      } | null;
+    }>;
+  },
+>(payslip: TPayslip) {
+  return {
+    ...payslip,
+    lineItems: payslip.lineItems.map((lineItem) => ({
+      ...lineItem,
+      totalAmount: formatCents(lineItem.rate!.amountCents * Number(lineItem.units)),
+      rate: {
+        ...lineItem.rate!,
+        amount: formatCents(lineItem.rate!.amountCents),
+        paymentCategory: lineItem.rate!.paymentCategory!,
+      },
+    })),
+  } as Omit<TPayslip, 'lineItems'> & {
+    lineItems: Array<
+      TPayslip['lineItems'][number] & {
+        totalAmount: number;
+        rate: NonNullable<TPayslip['lineItems'][number]['rate']> & {
+          amount: number;
+          paymentCategory: NonNullable<NonNullable<TPayslip['lineItems'][number]['rate']>['paymentCategory']>;
+        };
+      }
+    >;
+  };
+}
 
 function getAge(birthday: Date) {
   const today = new Date();

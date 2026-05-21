@@ -9,18 +9,19 @@ export const Route = createFileRoute('/')({
 
 function App() {
   const queryClient = useQueryClient();
-  const { data = [] } = useQuery(trpc.listEmployees.queryOptions());
+  const { data = [] } = useQuery(trpc.employees.list.queryOptions());
   const createRate = useMutation(
-    trpc.createRate.mutationOptions({
+    trpc.paymentCategories.rates.create.mutationOptions({
       onSuccess: () => {
-        void queryClient.invalidateQueries(trpc.listEmployees.queryFilter());
+        void queryClient.invalidateQueries(trpc.paymentCategories.forEmployee.queryFilter());
       },
     }),
   );
   const createPayslip = useMutation(
-    trpc.createPayslip.mutationOptions({
+    trpc.employees.payslips.create.mutationOptions({
       onSuccess: () => {
-        void queryClient.invalidateQueries(trpc.listEmployees.queryFilter());
+        void queryClient.invalidateQueries(trpc.employees.payslips.list.queryFilter());
+        void queryClient.invalidateQueries(trpc.employees.payslips.get.queryFilter());
       },
     }),
   );
@@ -29,7 +30,7 @@ function App() {
     <div className="min-h-screen bg-background p-6">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
         <EmployeePayrollAccordion
-          employees={data}
+          employeeIds={data.map((employee) => employee.id)}
           onCreateRate={createRate.mutate}
           onCreatePayslip={async (input) => {
             await createPayslip.mutateAsync(input);

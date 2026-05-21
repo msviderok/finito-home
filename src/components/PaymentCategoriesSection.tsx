@@ -1,22 +1,27 @@
+import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { groupCategoryRates } from '@/lib/category-rates';
 import { formatCurrency } from '@/lib/currency';
+import { trpc } from '@/router';
 import { InlineRateEditor } from './RateEditPopover';
-import type { CategoryRateGroup, CreateRateHandler } from './EmployeePayrollAccordion';
+import type { CreateRateHandler } from './RateEditPopover';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { Badge } from './ui/badge';
 
-export function PaymentCategoriesSection(props: {
-  employeeId: number;
-  categoryGroups: CategoryRateGroup[];
-  onCreateRate: CreateRateHandler;
-}) {
+export function PaymentCategoriesSection(props: { employeeId: number; onCreateRate: CreateRateHandler }) {
+  const { data: categoryRates = [] } = useQuery(
+    trpc.paymentCategories.forEmployee.queryOptions({ employeeId: props.employeeId }),
+  );
+  const categoryGroups = useMemo(() => groupCategoryRates(categoryRates), [categoryRates]);
+
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-sm font-semibold">Payment categories</h2>
-        <Badge variant="outline">{props.categoryGroups.length} current</Badge>
+        <Badge variant="outline">{categoryGroups.length} current</Badge>
       </div>
       <Accordion multiple>
-        {props.categoryGroups.map((group) => (
+        {categoryGroups.map((group) => (
           <PaymentCategoryAccordionItem
             key={group.paymentCategoryId}
             group={group}
@@ -30,7 +35,7 @@ export function PaymentCategoriesSection(props: {
 }
 
 export function PaymentCategoryAccordionItem(props: {
-  group: CategoryRateGroup;
+  group: ReturnType<typeof groupCategoryRates>[number];
   employeeId: number;
   onCreateRate: CreateRateHandler;
 }) {

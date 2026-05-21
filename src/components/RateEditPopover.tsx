@@ -26,11 +26,13 @@ export type InlineRateEditorRate = SelectRate & {
   paymentCategory: SelectPaymentCategory;
 };
 
+export type CreateRateHandler = (input: RateCreateFormOutput) => Promise<void> | void;
+
 export function InlineRateEditor(props: {
   currentRate: InlineRateEditorRate;
   history: InlineRateEditorRate[];
   employeeId: number;
-  onCreateRate?: (input: RateCreateFormOutput) => Promise<void> | void;
+  onCreateRate?: CreateRateHandler;
 }) {
   const form = useForm({
     schema: rateCreateFormSchema,
