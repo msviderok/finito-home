@@ -46,7 +46,7 @@ export const appRouter = t.router({
         },
       });
 
-      return employees.map((employee) => toEmployee(employee)).slice(0, 1);
+      return employees.map((employee) => toEmployee(employee));
     }),
 
     get: authedProcedure.input(v.object({ id: v.number() })).query(async ({ ctx, input }) => {

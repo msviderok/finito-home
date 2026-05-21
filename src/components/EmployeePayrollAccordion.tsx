@@ -1,6 +1,6 @@
 import type { inferRouterOutputs } from '@trpc/server';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { PayslipCreateMutationInput } from '@/db/schema/payslips';
 import type { AppRouter } from '@/lib/trpc';
 import { trpc } from '@/router';
@@ -22,10 +22,13 @@ export function EmployeePayrollAccordion(props: {
   onCreatePayslip: CreatePayslipHandler;
 }) {
   const [openEmployeeIds, setOpenEmployeeIds] = useState<number[]>([]);
+  const init = useRef(false);
 
   useEffect(() => {
+    if (init.current) return;
     if (props.employeeIds[0]) {
       setOpenEmployeeIds([props.employeeIds[0]]);
+      init.current = true;
     }
   }, [props.employeeIds]);
 
