@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Field, FieldArray, Form, getInput, insert, remove, useForm } from '@formisch/react';
-import { isSameMonth, startOfMonth } from 'date-fns';
+import { startOfMonth } from 'date-fns';
 import { Plus, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { payslipDraftFormSchema, sanitizeHoursInput } from '@/db/schema/payslips';
@@ -24,11 +24,8 @@ type CategoryOption = {
 };
 
 export function PayslipsSection(props: { employeeId: number; onCreatePayslip: CreatePayslipHandler }) {
-  const { viewAsOfMonth } = useViewAsOf();
   const [showForm, setShowForm] = useState(false);
   const { data: payslips = [] } = useQuery(trpc.employees.payslips.list.queryOptions({ employeeId: props.employeeId }));
-  const hasPayslipForViewAsOfMonth = payslips.some((payslip) => isSameMonth(payslip.paymentDate, viewAsOfMonth));
-  const canCreatePayslip = !hasPayslipForViewAsOfMonth;
 
   return (
     <section className="flex flex-col gap-2">
@@ -45,7 +42,7 @@ export function PayslipsSection(props: { employeeId: number; onCreatePayslip: Cr
         )}
       </div>
 
-      {showForm && canCreatePayslip && (
+      {showForm && (
         <AddPayslipForm
           employeeId={props.employeeId}
           onCreatePayslip={async (input) => {
