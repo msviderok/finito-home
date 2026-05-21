@@ -1,5 +1,12 @@
 import { db } from '@/db';
-import { rateCreateMutationSchema, ratesTable, type SelectUser } from '@/db/schema';
+import {
+  payslipCreateMutationSchema,
+  payslipLineItemsTable,
+  payslipsTable,
+  rateCreateMutationSchema,
+  ratesTable,
+  type SelectUser,
+} from '@/db/schema';
 import { formatCents } from '@/lib/currency';
 import { initTRPC, TRPCError } from '@trpc/server';
 import { type FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch';
@@ -56,6 +63,7 @@ export const appRouter = t.router({
         },
       },
     });
+
     return employees.map((employee) => ({
       ...employee,
       age: getAge(employee.birthday),
@@ -75,7 +83,7 @@ export const appRouter = t.router({
           ...payslip,
           lineItems: payslip.lineItems.map((lineItem) => ({
             ...lineItem,
-            totalAmount: formatCents(lineItem.totalAmountCents),
+            totalAmount: formatCents(lineItem.rate!.amountCents * Number(lineItem.units)),
             rate: {
               ...lineItem.rate!,
               amount: formatCents(lineItem.rate!.amountCents),
@@ -126,6 +134,65 @@ export const appRouter = t.router({
       effectiveTo: input.effectiveTo,
     });
     console.log(data);
+  }),
+
+  createPayslip: authedProcedure.input(payslipCreateMutationSchema).mutation(async ({ ctx, input }) => {
+    return ctx.db.transaction(async (tx) => {
+      const now = new Date();
+      const seenCategoryIds = new Set<number>();
+      const lineItems = [];
+
+      for (const lineItem of input.lineItems) {
+        if (seenCategoryIds.has(lineItem.paymentCategoryId)) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Each payment category can only be added once',
+          });
+        }
+        seenCategoryIds.add(lineItem.paymentCategoryId);
+
+        const rate = await tx.query.rates.findFirst({
+          where: {
+            id: lineItem.rateId,
+          },
+        });
+
+        if (!rate || rate.employeeId !== input.employeeId || rate.paymentCategoryId !== lineItem.paymentCategoryId) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Selected payment category rate is not valid for this employee',
+          });
+        }
+
+        lineItems.push({
+          rateId: lineItem.rateId,
+          units: lineItem.hours.toFixed(2),
+          paymentDate: input.paymentDate,
+          totalAmountCents: Math.round(rate.amountCents * lineItem.hours),
+          createdAt: now,
+          createdById: ctx.user.id,
+        });
+      }
+
+      const [payslip] = await tx
+        .insert(payslipsTable)
+        .values({
+          employeeId: input.employeeId,
+          paymentDate: input.paymentDate,
+          createdAt: now,
+          createdById: ctx.user.id,
+        })
+        .returning();
+
+      await tx.insert(payslipLineItemsTable).values(
+        lineItems.map((lineItem) => ({
+          ...lineItem,
+          payslipId: payslip.id,
+        })),
+      );
+
+      return { id: payslip.id };
+    });
   }),
 });
 

@@ -1,0 +1,1 @@
+ALTER TABLE `payslip_line_items` DROP COLUMN `total_amount_cents`;

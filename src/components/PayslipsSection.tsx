@@ -3,7 +3,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { payslipDraftFormSchema, sanitizeHoursInput } from '@/db/schema/payslips';
 import { formatCurrency } from '@/lib/currency';
-import type { CategoryRateGroup, Employee } from './EmployeePayrollAccordion';
+import type { CategoryRateGroup, CreatePayslipHandler, Employee } from './EmployeePayrollAccordion';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -18,7 +18,11 @@ type CategoryOption = {
   rateAmount: number;
 };
 
-export function PayslipsSection(props: { employee: Employee; categoryGroups: CategoryRateGroup[] }) {
+export function PayslipsSection(props: {
+  employee: Employee;
+  categoryGroups: CategoryRateGroup[];
+  onCreatePayslip: CreatePayslipHandler;
+}) {
   const [showForm, setShowForm] = useState(false);
 
   return (
@@ -31,7 +35,16 @@ export function PayslipsSection(props: { employee: Employee; categoryGroups: Cat
         </Button>
       </div>
 
-      {showForm && <AddPayslipForm employee={props.employee} categoryGroups={props.categoryGroups} />}
+      {showForm && (
+        <AddPayslipForm
+          employee={props.employee}
+          categoryGroups={props.categoryGroups}
+          onCreatePayslip={async (input) => {
+            await props.onCreatePayslip(input);
+            setShowForm(false);
+          }}
+        />
+      )}
 
       {props.employee.payslips.length === 0 ? (
         <p className="rounded-md border border-dashed p-3 text-muted-foreground">No pay slips yet.</p>
@@ -82,7 +95,11 @@ export function PayslipAccordionItem(props: { payslip: Employee['payslips'][numb
   );
 }
 
-function AddPayslipForm(props: { employee: Employee; categoryGroups: CategoryRateGroup[] }) {
+function AddPayslipForm(props: {
+  employee: Employee;
+  categoryGroups: CategoryRateGroup[];
+  onCreatePayslip: CreatePayslipHandler;
+}) {
   const form = useForm({
     schema: payslipDraftFormSchema,
     initialInput: {
@@ -103,8 +120,8 @@ function AddPayslipForm(props: { employee: Employee; categoryGroups: CategoryRat
   return (
     <Form
       of={form}
-      onSubmit={(output) => {
-        console.log(output);
+      onSubmit={async (output) => {
+        await props.onCreatePayslip(output);
       }}
       className="flex flex-col gap-3 rounded-md border p-3"
     >
@@ -176,7 +193,7 @@ function AddPayslipForm(props: { employee: Employee; categoryGroups: CategoryRat
 
       <div className="flex justify-end">
         <Button type="submit" disabled={form.isSubmitting}>
-          Log payslip
+          Create payslip
         </Button>
       </div>
     </Form>

@@ -11,7 +11,8 @@
     "format": "vp fmt \"**/*.{ts,tsx,js,jsx}\"",
     "typecheck": "tsc --noEmit",
     "prepare": "vp config",
-    "db": "drizzle-kit"
+    "db": "drizzle-kit",
+    "dbm": "pnpm db generate && pnpm db migrate"
   },
   "dependencies": {
     "@base-ui/react": "catalog:",
@@ -35,7 +36,6 @@
     "drizzle-valibot": "catalog:",
     "lucide-react": "catalog:",
     "nitro": "catalog:",
-    "radix-ui": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
     "shadcn": "catalog:",

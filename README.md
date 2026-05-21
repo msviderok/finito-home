@@ -8,3 +8,4 @@
 - We will use cents for the currency-related amounts to ensure there is no problem with the floating math.
 - If in future any payslip can be edited by other users, then payslipLineItems should have the created_by_id as well.
 - For real user management, we need to set up a proper authentication and authorization system with TRPC's protected procedure.
+- If I had more time, I would have added an ability to change any related entity from the form of any other related entity.

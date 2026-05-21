@@ -5,7 +5,6 @@ import { schema, relations } from './schema';
 export const db = drizzle({
   schema,
   relations,
-  logger: true,
   connection: {
     url: env.TURSO_CONNECTION_URL,
     authToken: env.TURSO_AUTH_TOKEN,

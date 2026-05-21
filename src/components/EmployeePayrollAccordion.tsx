@@ -1,5 +1,6 @@
 import type { inferRouterOutputs } from '@trpc/server';
 import { useEffect, useMemo, useState } from 'react';
+import type { PayslipCreateMutationInput } from '@/db/schema/payslips';
 import type { AppRouter } from '@/lib/trpc';
 import { InlineRateEditor } from './RateEditPopover';
 import { PaymentCategoriesSection } from './PaymentCategoriesSection';
@@ -16,8 +17,13 @@ export type CategoryRateGroup = {
   rates: CategoryRate[];
 };
 export type CreateRateHandler = Parameters<typeof InlineRateEditor>[0]['onCreateRate'];
+export type CreatePayslipHandler = (input: PayslipCreateMutationInput) => Promise<void> | void;
 
-export function EmployeePayrollAccordion(props: { employees: Employee[]; onCreateRate: CreateRateHandler }) {
+export function EmployeePayrollAccordion(props: {
+  employees: Employee[];
+  onCreateRate: CreateRateHandler;
+  onCreatePayslip: CreatePayslipHandler;
+}) {
   const [openEmployeeIds, setOpenEmployeeIds] = useState<number[]>([]);
 
   useEffect(() => {
@@ -29,13 +35,22 @@ export function EmployeePayrollAccordion(props: { employees: Employee[]; onCreat
   return (
     <Accordion multiple value={openEmployeeIds} onValueChange={setOpenEmployeeIds}>
       {props.employees.map((employee) => (
-        <EmployeeAccordionItem key={employee.id} employee={employee} onCreateRate={props.onCreateRate} />
+        <EmployeeAccordionItem
+          key={employee.id}
+          employee={employee}
+          onCreateRate={props.onCreateRate}
+          onCreatePayslip={props.onCreatePayslip}
+        />
       ))}
     </Accordion>
   );
 }
 
-export function EmployeeAccordionItem(props: { employee: Employee; onCreateRate: CreateRateHandler }) {
+export function EmployeeAccordionItem(props: {
+  employee: Employee;
+  onCreateRate: CreateRateHandler;
+  onCreatePayslip: CreatePayslipHandler;
+}) {
   const categoryGroups = useMemo(
     () => groupCategoryRates(props.employee.categoryRates),
     [props.employee.categoryRates],
@@ -58,7 +73,11 @@ export function EmployeeAccordionItem(props: { employee: Employee; onCreateRate:
           categoryGroups={categoryGroups}
           onCreateRate={props.onCreateRate}
         />
-        <PayslipsSection employee={props.employee} categoryGroups={categoryGroups} />
+        <PayslipsSection
+          employee={props.employee}
+          categoryGroups={categoryGroups}
+          onCreatePayslip={props.onCreatePayslip}
+        />
       </AccordionContent>
     </AccordionItem>
   );

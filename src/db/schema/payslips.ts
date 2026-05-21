@@ -67,7 +67,27 @@ export const payslipDraftFormSchema = v.pipe(
   })),
 );
 
+export const payslipCreateMutationSchema = v.object({
+  employeeId: v.number(),
+  paymentDate: v.date('Enter a payment date'),
+  lineItems: v.pipe(
+    v.array(
+      v.object({
+        paymentCategoryId: v.number(),
+        rateId: v.number(),
+        hours: v.pipe(v.number(), v.minValue(0.01, 'Enter valid billable hours')),
+      }),
+    ),
+    v.minLength(1, 'Add at least one payment category'),
+    v.check((lineItems) => {
+      const categoryIds = new Set(lineItems.map((lineItem) => lineItem.paymentCategoryId));
+      return categoryIds.size === lineItems.length;
+    }, 'Each payment category can only be added once'),
+  ),
+});
+
 export type SelectPayslip = typeof payslipsTable.$inferSelect;
 export type InsertPayslip = typeof payslipsTable.$inferInsert;
 export type PayslipDraftFormInput = v.InferInput<typeof payslipDraftFormSchema>;
 export type PayslipDraftFormOutput = v.InferOutput<typeof payslipDraftFormSchema>;
+export type PayslipCreateMutationInput = v.InferOutput<typeof payslipCreateMutationSchema>;

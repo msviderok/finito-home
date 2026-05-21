@@ -42,7 +42,6 @@ catalog:
   jsdom: ^29.1.1
   lucide-react: ^1.16.0
   nitro: latest
-  radix-ui: ^1.4.3
   react: ^19.2.4
   react-dom: ^19.2.4
   shadcn: ^4.7.0
