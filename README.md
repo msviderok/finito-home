@@ -26,6 +26,10 @@
 
 `dev:local` and the migrate command above use a `local.db` file in the project root. No `.env` file is required for local development.
 
+### Browser compatibility
+
+Month selection uses the native `<input type="month">` (`MonthPicker`). That control is not supported in Mozilla Firefox, so date picking may not work there. For now, use Chrome when reviewing or testing the UI.
+
 ### Remote Turso (optional)
 
 Create a `.env` file:
@@ -86,6 +90,7 @@ Assignment requirements checklist (`[x]` done, `[ ]` not yet).
 
 ### Docs, tests, and polish
 
+- [ ] Visual polish — spacing, alignment, and general UI tweaks so it does not look sloppy
 - [x] Scaffold tests: create rate, create payslip, edit rate
 - [ ] Finish test coverage (retroactive totals, dismiss)
 - [ ] Document design choices and tradeoffs
