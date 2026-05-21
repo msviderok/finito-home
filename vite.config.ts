@@ -33,6 +33,16 @@ const config = defineConfig({
   resolve: {
     tsconfigPaths: true,
   },
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts', './src/test/mock-trpc.ts'],
+    include: ['src/test/**/*.{test,spec}.{ts,tsx}'],
+    server: {
+      deps: {
+        inline: ['react', 'react-dom', '@base-ui/react'],
+      },
+    },
+  },
 });
 
 export default config;
