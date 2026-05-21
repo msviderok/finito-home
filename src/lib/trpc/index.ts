@@ -41,15 +41,49 @@ export const appRouter = t.router({
             paymentCategory: true,
           },
         },
+        payslips: {
+          with: {
+            lineItems: {
+              with: {
+                rate: {
+                  with: {
+                    paymentCategory: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
     return employees.map((employee) => ({
       ...employee,
-      categoryRates: employee.categoryRates.map((categoryRate) => ({
-        ...categoryRate,
-        paymentCategory: categoryRate.paymentCategory!,
-        amount: formatCents(categoryRate.amountCents),
-      })),
+      age: getAge(employee.birthday),
+      categoryRates: employee.categoryRates
+        .map((categoryRate) => ({
+          ...categoryRate,
+          paymentCategory: categoryRate.paymentCategory!,
+          amount: formatCents(categoryRate.amountCents),
+        }))
+        .sort((a, b) => {
+          const categoryCompare = a.paymentCategory.name.localeCompare(b.paymentCategory.name);
+          if (categoryCompare !== 0) return categoryCompare;
+          return b.effectiveFrom.getTime() - a.effectiveFrom.getTime();
+        }),
+      payslips: employee.payslips
+        .map((payslip) => ({
+          ...payslip,
+          lineItems: payslip.lineItems.map((lineItem) => ({
+            ...lineItem,
+            totalAmount: formatCents(lineItem.totalAmountCents),
+            rate: {
+              ...lineItem.rate!,
+              amount: formatCents(lineItem.rate!.amountCents),
+              paymentCategory: lineItem.rate!.paymentCategory!,
+            },
+          })),
+        }))
+        .sort((a, b) => b.paymentDate.getTime() - a.paymentDate.getTime()),
     }));
   }),
 
@@ -94,3 +128,11 @@ export const appRouter = t.router({
     console.log(data);
   }),
 });
+
+function getAge(birthday: Date) {
+  const today = new Date();
+  let age = today.getFullYear() - birthday.getFullYear();
+  const birthdayThisYear = new Date(today.getFullYear(), birthday.getMonth(), birthday.getDate());
+  if (today < birthdayThisYear) age -= 1;
+  return age;
+}

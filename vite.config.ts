@@ -27,7 +27,7 @@ const config = defineConfig({
       functions: ['cn', 'cva'],
     },
     sortPackageJson: false,
-    ignorePatterns: ['package-lock.json', 'pnpm-lock.yaml', 'yarn.lock'],
+    ignorePatterns: ['package-lock.json', 'pnpm-lock.yaml', 'yarn.lock', 'src/routeTree.gen.ts'],
   },
   plugins: [nitro(), tailwindcss(), tanstackStart({}), viteReact(), babel({ presets: [reactCompilerPreset()] })],
   resolve: {
