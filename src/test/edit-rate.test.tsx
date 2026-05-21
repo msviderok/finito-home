@@ -12,7 +12,7 @@ describe('edit rate', () => {
     onCreateRate.mockReset();
   });
 
-  it('submits revised amount and effective dates', async () => {
+  it('submits revised amount with effective from from retroactive view', async () => {
     const [currentRate, previousRate] = hourlyCategoryRates;
     renderWithProviders(
       <InlineRateEditor
@@ -21,14 +21,12 @@ describe('edit rate', () => {
         employeeId={1}
         onCreateRate={onCreateRate}
       />,
+      { initialViewAsOfMonth: new Date('2026-03-01T00:00:00') },
     );
 
     expect((screen.getByLabelText(/^Rate$/i) as HTMLInputElement).value).toBe('25.00');
-    expect((screen.getByLabelText(/^Effective from$/i) as HTMLInputElement).value).toBe('2026-01-01');
 
     fireEvent.change(screen.getByLabelText(/^Rate$/i), { target: { value: '28.00' } });
-    fireEvent.change(screen.getByLabelText(/^Effective from$/i), { target: { value: '2026-03-15' } });
-    fireEvent.change(screen.getByLabelText(/^Effective to$/i), { target: { value: '2026-12-31' } });
     fireEvent.click(screen.getByRole('button', { name: 'Add rate' }));
 
     await waitFor(() => expect(onCreateRate).toHaveBeenCalledOnce());
@@ -36,8 +34,7 @@ describe('edit rate', () => {
       amount: 28,
       employeeId: 1,
       paymentCategoryId: 1,
-      effectiveFrom: startOfMonth(new Date('2026-03-15T00:00:00')),
-      effectiveTo: new Date('2026-12-31T00:00:00'),
+      effectiveFrom: startOfMonth(new Date('2026-03-01T00:00:00')),
       previousRateId: currentRate.id,
     });
     expect(screen.getByText('Current')).toBeTruthy();

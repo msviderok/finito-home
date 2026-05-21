@@ -16,16 +16,16 @@ export function createTestQueryClient() {
 
 export function renderWithProviders(
   ui: ReactElement,
-  options?: Omit<RenderOptions, 'wrapper'> & { queryClient?: QueryClient },
+  options?: Omit<RenderOptions, 'wrapper'> & { queryClient?: QueryClient; initialViewAsOfMonth?: Date },
 ) {
-  const { queryClient: providedClient, ...renderOptions } = options ?? {};
+  const { queryClient: providedClient, initialViewAsOfMonth, ...renderOptions } = options ?? {};
   const queryClient = providedClient ?? createTestQueryClient();
   return {
     queryClient,
     ...render(ui, {
       wrapper: ({ children }) => (
         <QueryClientProvider client={queryClient}>
-          <ViewAsOfProvider>{children}</ViewAsOfProvider>
+          <ViewAsOfProvider initialViewAsOfMonth={initialViewAsOfMonth}>{children}</ViewAsOfProvider>
         </QueryClientProvider>
       ),
       ...renderOptions,

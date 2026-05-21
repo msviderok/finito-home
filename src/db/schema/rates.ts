@@ -38,34 +38,33 @@ export const rateCreateMutationSchema = v.object({
   paymentCategoryId: rateInsertSchema.entries.paymentCategoryId,
   effectiveFrom: rateInsertSchema.entries.effectiveFrom,
   previousRateId: v.optional(rateInsertSchema.entries.previousRateId),
-  effectiveTo: v.optional(rateInsertSchema.entries.effectiveTo),
 });
 
-export const rateCreateFormSchema = v.pipe(
-  v.omit(
-    createInsertSchema(ratesTable, {
-      amountCents: () => rateAmountSchema,
-      effectiveFrom: () => v.date('Enter an effective from date'),
-    }),
-    ['id', 'createdAt'],
-  ),
-  v.transform((input) =>
-    v.parse(rateCreateMutationSchema, {
-      amount: parseRateAmountInput(input.amountCents),
-      employeeId: input.employeeId,
-      paymentCategoryId: input.paymentCategoryId,
-      effectiveFrom: startOfMonth(input.effectiveFrom),
-      previousRateId: input.previousRateId,
-      effectiveTo: input.effectiveTo,
-    }),
-  ),
+export const rateCreateFormFieldsSchema = v.omit(
+  createInsertSchema(ratesTable, {
+    amountCents: () => rateAmountSchema,
+  }),
+  ['id', 'createdAt', 'effectiveFrom', 'effectiveTo'],
 );
+
+export function parseRateCreateMutation(
+  input: v.InferOutput<typeof rateCreateFormFieldsSchema>,
+  effectiveFromMonth: Date,
+): v.InferOutput<typeof rateCreateMutationSchema> {
+  return v.parse(rateCreateMutationSchema, {
+    amount: parseRateAmountInput(input.amountCents),
+    employeeId: input.employeeId,
+    paymentCategoryId: input.paymentCategoryId,
+    effectiveFrom: startOfMonth(effectiveFromMonth),
+    previousRateId: input.previousRateId,
+  });
+}
 
 export const rateSelectSchema = createSelectSchema(ratesTable);
 export const rateUpdateSchema = createUpdateSchema(ratesTable);
 
 export type SelectRate = typeof ratesTable.$inferSelect;
 export type InsertRate = typeof ratesTable.$inferInsert;
-export type RateCreateFormInput = v.InferInput<typeof rateCreateFormSchema>;
-export type RateCreateFormOutput = v.InferOutput<typeof rateCreateFormSchema>;
+export type RateCreateFormInput = v.InferInput<typeof rateCreateFormFieldsSchema>;
+export type RateCreateFormOutput = v.InferOutput<typeof rateCreateMutationSchema>;
 export type RateCreateMutationInput = v.InferOutput<typeof rateCreateMutationSchema>;

@@ -229,17 +229,17 @@ export const appRouter = t.router({
           });
 
           const hasTimelineConflict = categoryRates.some((rate) =>
-            ratePeriodsOverlap(rate.effectiveFrom, rate.effectiveTo, input.effectiveFrom, input.effectiveTo),
+            ratePeriodsOverlap(rate.effectiveFrom, rate.effectiveTo, input.effectiveFrom, null),
           );
 
-          if (hasTimelineConflict && !findSupersededRate(categoryRates, input.effectiveFrom, input.effectiveTo)) {
+          if (hasTimelineConflict && !findSupersededRate(categoryRates, input.effectiveFrom, null)) {
             throw new TRPCError({
               code: 'BAD_REQUEST',
               message: 'New rate overlaps an existing rate timeline',
             });
           }
 
-          const existingRate = findSupersededRate(categoryRates, input.effectiveFrom, input.effectiveTo);
+          const existingRate = findSupersededRate(categoryRates, input.effectiveFrom, null);
 
           let previousRateId = input.previousRateId;
           if (existingRate) {
@@ -262,7 +262,7 @@ export const appRouter = t.router({
               effectiveFrom: input.effectiveFrom,
               createdAt: new Date(),
               previousRateId,
-              effectiveTo: input.effectiveTo,
+              effectiveTo: null,
             })
             .returning();
 

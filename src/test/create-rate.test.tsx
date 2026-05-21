@@ -12,14 +12,14 @@ describe('create rate', () => {
     onCreateRate.mockReset();
   });
 
-  it('submits a new rate with updated amount and effective from', async () => {
+  it('submits a new rate with updated amount and view-as-of effective from', async () => {
     const currentRate = createCategoryRate();
     renderWithProviders(
       <InlineRateEditor currentRate={currentRate} history={[currentRate]} employeeId={1} onCreateRate={onCreateRate} />,
+      { initialViewAsOfMonth: new Date('2026-06-01T00:00:00') },
     );
 
     fireEvent.change(screen.getByLabelText(/^Rate$/i), { target: { value: '32.50' } });
-    fireEvent.change(screen.getByLabelText(/^Effective from$/i), { target: { value: '2026-06-15' } });
     fireEvent.click(screen.getByRole('button', { name: 'Add rate' }));
 
     await waitFor(() => expect(onCreateRate).toHaveBeenCalledOnce());
@@ -27,9 +27,8 @@ describe('create rate', () => {
       amount: 32.5,
       employeeId: 1,
       paymentCategoryId: 1,
-      effectiveFrom: startOfMonth(new Date('2026-06-15T00:00:00')),
+      effectiveFrom: startOfMonth(new Date('2026-06-01T00:00:00')),
       previousRateId: 1,
-      effectiveTo: undefined,
     });
   });
 

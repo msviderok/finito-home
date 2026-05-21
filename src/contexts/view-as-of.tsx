@@ -16,8 +16,8 @@ type ViewAsOfContextValue = {
 
 const ViewAsOfContext = createContext<ViewAsOfContextValue | null>(null);
 
-export function ViewAsOfProvider(props: { children: ReactNode }) {
-  const [viewAsOfMonth, setViewAsOfMonth] = useState(currentViewAsOfMonth);
+export function ViewAsOfProvider(props: { children: ReactNode; initialViewAsOfMonth?: Date }) {
+  const [viewAsOfMonth, setViewAsOfMonth] = useState(() => props.initialViewAsOfMonth ?? currentViewAsOfMonth());
   const viewAsOfAt = useMemo(() => viewAsOfInstant(viewAsOfMonth), [viewAsOfMonth]);
   const isRetroactiveView = !isViewingCurrentMonth(viewAsOfMonth);
 

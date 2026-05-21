@@ -3,23 +3,15 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { rateCreateFormSchema, type RateCreateFormOutput, type SelectRate } from '@/db/schema/rates';
+import { useViewAsOf } from '@/contexts/view-as-of';
+import {
+  parseRateCreateMutation,
+  rateCreateFormFieldsSchema,
+  type RateCreateFormOutput,
+  type SelectRate,
+} from '@/db/schema/rates';
 import type { SelectPaymentCategory } from '@/db/schema/paymentCategories';
 import { formatCurrency, formatRateAmount, sanitizeRateAmountInput } from '@/lib/currency';
-
-function formatDateInputValue(date: Date | undefined) {
-  if (!date || Number.isNaN(date.getTime())) return '';
-
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
-}
-
-function parseDateInputValue(value: string) {
-  return value ? new Date(`${value}T00:00:00`) : new Date(Number.NaN);
-}
 
 export type InlineRateEditorRate = SelectRate & {
   amount: number;
@@ -34,13 +26,13 @@ export function InlineRateEditor(props: {
   employeeId: number;
   onCreateRate?: CreateRateHandler;
 }) {
+  const { viewAsOfMonth } = useViewAsOf();
   const form = useForm({
-    schema: rateCreateFormSchema,
+    schema: rateCreateFormFieldsSchema,
     initialInput: {
       amountCents: formatRateAmount(props.currentRate.amountCents / 100),
       employeeId: props.employeeId,
       paymentCategoryId: props.currentRate.paymentCategoryId,
-      effectiveFrom: props.currentRate.effectiveFrom,
       previousRateId: props.currentRate.id,
     },
     validate: 'input',
@@ -49,8 +41,12 @@ export function InlineRateEditor(props: {
 
   return (
     <div className="flex flex-col gap-3">
-      <Form of={form} onSubmit={(input) => props.onCreateRate?.(input)} className="flex flex-col gap-3">
-        <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
+      <Form
+        of={form}
+        onSubmit={(input) => props.onCreateRate?.(parseRateCreateMutation(input, viewAsOfMonth))}
+        className="flex flex-col gap-3"
+      >
+        <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
           <label className="flex flex-col gap-1">
             <span className="text-muted-foreground">Rate</span>
             <Field of={form} path={['amountCents']}>
@@ -61,38 +57,6 @@ export function InlineRateEditor(props: {
                   inputMode="decimal"
                   value={field.input}
                   onChange={(event) => field.onChange(sanitizeRateAmountInput(event.target.value))}
-                  aria-invalid={field.errors ? true : undefined}
-                  className="aria-invalid:ring-destructive/30"
-                />
-              )}
-            </Field>
-          </label>
-
-          <label className="flex flex-col gap-1">
-            <span className="text-muted-foreground">Effective from</span>
-            <Field of={form} path={['effectiveFrom']}>
-              {(field) => (
-                <Input
-                  {...field.props}
-                  type="date"
-                  value={formatDateInputValue(field.input)}
-                  onChange={(event) => field.onChange(parseDateInputValue(event.target.value))}
-                  aria-invalid={field.errors ? true : undefined}
-                  className="aria-invalid:ring-destructive/30"
-                />
-              )}
-            </Field>
-          </label>
-
-          <label className="flex flex-col gap-1">
-            <span className="text-muted-foreground">Effective to</span>
-            <Field of={form} path={['effectiveTo']}>
-              {(field) => (
-                <Input
-                  {...field.props}
-                  type="date"
-                  value={field.input ? formatDateInputValue(field.input) : ''}
-                  onChange={(event) => field.onChange(parseDateInputValue(event.target.value))}
                   aria-invalid={field.errors ? true : undefined}
                   className="aria-invalid:ring-destructive/30"
                 />
