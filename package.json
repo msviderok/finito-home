@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vp dev --port 3000",
+    "dev:local": "TURSO_CONNECTION_URL=file:local.db TURSO_AUTH_TOKEN=local vp dev --port 3000",
     "build": "vp build",
     "preview": "vp preview",
     "test": "vp test run",

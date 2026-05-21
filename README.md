@@ -1,6 +1,43 @@
 # Finito Home Assignment
 
-## WIP bulletpoints
+## Start from scratch
+
+**Prerequisites:** [Node.js](https://nodejs.org/), [pnpm](https://pnpm.io/), and the [Vite+](https://viteplus.dev/) CLI (`vp`).
+
+1. Clone the repo and install dependencies:
+
+   ```bash
+   pnpm install
+   ```
+
+2. Apply database migrations (local SQLite file):
+
+   ```bash
+   TURSO_CONNECTION_URL=file:local.db TURSO_AUTH_TOKEN=local pnpm dbm
+   ```
+
+3. Start the dev server:
+
+   ```bash
+   pnpm dev:local
+   ```
+
+4. Open [http://localhost:3000](http://localhost:3000).
+
+`dev:local` and the migrate command above use a `local.db` file in the project root. No `.env` file is required for local development.
+
+### Remote Turso (optional)
+
+Create a `.env` file:
+
+```env
+TURSO_CONNECTION_URL=https://your-database.turso.io
+TURSO_AUTH_TOKEN=your-token
+```
+
+Then run `pnpm dbm` and `pnpm dev`.
+
+## Work in progress
 
 - If the scope requires, the role should be a separate table with properly set-up relations to manage users' permissions.
 - For this assignment, the year starts on January 1 and ends on December 31, but in the future, there might be a need to set up a custom fiscal year.
