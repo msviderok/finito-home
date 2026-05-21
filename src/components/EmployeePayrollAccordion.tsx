@@ -21,10 +21,10 @@ export function EmployeePayrollAccordion(props: { employees: Employee[]; onCreat
   const [openEmployeeIds, setOpenEmployeeIds] = useState<number[]>([]);
 
   useEffect(() => {
-    if (openEmployeeIds.length === 0 && props.employees[0]) {
+    if (props.employees[0]) {
       setOpenEmployeeIds([props.employees[0].id]);
     }
-  }, [props.employees, openEmployeeIds.length]);
+  }, [props.employees]);
 
   return (
     <Accordion multiple value={openEmployeeIds} onValueChange={setOpenEmployeeIds}>

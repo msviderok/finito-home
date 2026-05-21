@@ -114,9 +114,6 @@ catalogs:
     lucide-react:
       specifier: ^1.16.0
       version: 1.16.0
-    next-themes:
-      specifier: ^0.4.6
-      version: 0.4.6
     nitro:
       specifier: latest
       version: 3.0.260429-beta
@@ -225,9 +222,6 @@ importers:
       lucide-react:
         specifier: 'catalog:'
         version: 1.16.0(react@19.2.6)
-      next-themes:
-        specifier: 'catalog:'
-        version: 0.4.6(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       nitro:
         specifier: 'catalog:'
         version: 3.0.260429-beta(@libsql/client@0.17.3)(@voidzero-dev/vite-plus-core@0.1.22(@types/node@25.9.1)(jiti@2.7.0)(typescript@6.0.3))(dotenv@17.4.2)(drizzle-orm@1.0.0-beta.22(@libsql/client@0.17.3)(valibot@1.4.0(typescript@6.0.3))(zod@3.25.76))(jiti@2.7.0)(lru-cache@11.4.0)
@@ -4382,12 +4376,6 @@ packages:
   negotiator@1.0.0:
     resolution: {integrity: sha512-8Ofs/AUQh8MaEcrlq5xOX0CQ9ypTF5dl78mjlMNfOK08fzpgTHQRQPBxcPlEtIw0yRpws+Zo/3r+5WRby7u3Gg==}
     engines: {node: '>= 0.6'}
-
-  next-themes@0.4.6:
-    resolution: {integrity: sha512-pZvgD5L0IEvX5/9GWyHMf3m8BKiVQwsCMHfoFosXtXBMnaS0ZnIJ9ST4b4NqLVKDEm8QBxoNNGNaBv2JNF6XNA==}
-    peerDependencies:
-      react: ^16.8 || ^17 || ^18 || ^19 || ^19.0.0-rc
-      react-dom: ^16.8 || ^17 || ^18 || ^19 || ^19.0.0-rc
 
   nf3@0.3.17:
     resolution: {integrity: sha512-N9zEWySuJFw+gR0lhS5863YsvNeudOdqRyFvNb+jMXbeTJOdrjDqkCpDginIZfUm0LzT1t1nCRiDeqQm/8kirQ==}
@@ -8953,11 +8941,6 @@ snapshots:
   natural-compare@1.4.0: {}
 
   negotiator@1.0.0: {}
-
-  next-themes@0.4.6(react-dom@19.2.6(react@19.2.6))(react@19.2.6):
-    dependencies:
-      react: 19.2.6
-      react-dom: 19.2.6(react@19.2.6)
 
   nf3@0.3.17: {}
 

@@ -21,12 +21,7 @@ function App() {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
-        <EmployeePayrollAccordion
-          employees={data}
-          onCreateRate={async (input) => {
-            await createRate.mutateAsync(input);
-          }}
-        />
+        <EmployeePayrollAccordion employees={data} onCreateRate={createRate.mutate} />
       </div>
     </div>
   );
