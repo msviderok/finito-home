@@ -41,7 +41,7 @@ describe('edit rate', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Previous rates' }));
-    expect(screen.getByText(`Updated ${format(previousRate.createdAt, 'MMM d, yyyy')}`)).toBeTruthy();
-    expect(screen.getByText(`Effective ${format(previousRate.effectiveFrom, 'MMM yyyy')}`)).toBeTruthy();
+    expect(screen.getByText(format(previousRate.createdAt, 'MMM d, yyyy'))).toBeTruthy();
+    expect(screen.getByText(format(previousRate.effectiveFrom, 'MMM yyyy'))).toBeTruthy();
   });
 });

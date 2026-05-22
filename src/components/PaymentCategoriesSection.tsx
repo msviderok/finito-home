@@ -4,7 +4,12 @@ import { Input } from '@/components/ui/input';
 import { useViewAsOf } from '@/components/ViewAsOfProvider';
 import type { SelectPaymentCategory } from '@/db/schema/paymentCategories';
 import { rateCreateMutationSchema, type RateCreateFormOutput, type SelectRate } from '@/db/schema/rates';
-import { hasConflictingRatesAt, groupCategoryRates, isRateEffectiveAt } from '@/lib/category-rates';
+import {
+  getLatestRateChange,
+  groupCategoryRates,
+  hasConflictingRatesAt,
+  isRateEffectiveAt,
+} from '@/lib/category-rates';
 import {
   formatCurrency,
   formatRateAmount,
@@ -17,10 +22,17 @@ import { cn } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, startOfMonth } from 'date-fns';
 import { ArrowRight, Check, ChevronDown, Edit2, XIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import * as v from 'valibot';
 import { PaymentCategoriesSkeleton } from '@/components/loading-skeletons';
 import { Badge } from '@/components/ui/badge';
+import {
+  SmallTable,
+  smallTableCellClass,
+  smallTableHeadClass,
+  smallTableRowClass,
+} from '@/components/ui/compact-table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function PaymentCategoriesSection(props: { employeeId: number; onCreateRate: CreateRateHandler }) {
@@ -38,26 +50,36 @@ export function PaymentCategoriesSection(props: { employeeId: number; onCreateRa
   return (
     <section className="flex flex-col gap-2">
       <h2 className="text-xs font-semibold">Payment categories</h2>
-      <div className="divide-y divide-border">
-        {categoryGroups.map((group) => (
-          <section key={group.paymentCategoryId} className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-xs font-medium">{group.paymentCategory.name}</span>
-              <span className="text-xs text-muted-foreground tabular-nums">
-                Effective {format(group.currentRate.effectiveFrom, 'MMM yyyy')}
-              </span>
-            </div>
-
-            <InlineRateEditor
-              currentRate={group.currentRate}
-              history={group.rates}
-              employeeId={props.employeeId}
-              viewAsOfAt={viewAsOfAt}
-              onCreateRate={props.onCreateRate}
-            />
-          </section>
-        ))}
-      </div>
+      <SmallTable>
+        <Table>
+          <TableHeader>
+            <TableRow className="border-b-0 hover:bg-transparent">
+              <TableHead className={cn(smallTableHeadClass, 'min-w-0')}>Category</TableHead>
+              <TableHead className={cn(smallTableHeadClass, 'w-28')}>Effective</TableHead>
+              <TableHead className={cn(smallTableHeadClass, 'text-right')}>Rate</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {categoryGroups.map((group) => (
+              <TableRow key={group.paymentCategoryId} className={smallTableRowClass}>
+                <TableCell className={cn(smallTableCellClass, 'font-medium')}>{group.paymentCategory.name}</TableCell>
+                <TableCell className={cn(smallTableCellClass, 'text-muted-foreground tabular-nums')}>
+                  {format(group.currentRate.effectiveFrom, 'MMM yyyy')}
+                </TableCell>
+                <TableCell className={cn(smallTableCellClass, 'text-right')}>
+                  <InlineRateEditor
+                    currentRate={group.currentRate}
+                    history={group.rates}
+                    employeeId={props.employeeId}
+                    viewAsOfAt={viewAsOfAt}
+                    onCreateRate={props.onCreateRate}
+                  />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </SmallTable>
     </section>
   );
 }
@@ -93,6 +115,7 @@ export function InlineRateEditor(props: {
     }),
   );
   const hasConflictingRates = hasConflictingRatesAt(props.history, props.viewAsOfAt);
+  const latestRateChange = getLatestRateChange(props.history, props.viewAsOfAt);
   const effectiveMonthLabel = format(startOfMonth(viewAsOfMonth), 'MMM yyyy');
 
   useEffect(() => {
@@ -123,11 +146,10 @@ export function InlineRateEditor(props: {
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="flex w-full min-w-0 flex-col items-stretch gap-2">
+      <div className="flex flex-wrap items-center justify-end gap-2">
         {!editing ? (
           <>
-            <span className="text-xs text-muted-foreground">Rate</span>
             <span className="text-xs font-semibold tabular-nums">{formatCurrency(props.currentRate.amount)}</span>
             <Button
               type="button"
@@ -142,6 +164,20 @@ export function InlineRateEditor(props: {
             >
               <Edit2 />
             </Button>
+            {latestRateChange && (
+              <RateDismissButton
+                variant="button"
+                label="Dismiss latest change"
+                message={
+                  <>
+                    Remove {formatCurrency(latestRateChange.latest.amount)} and restore{' '}
+                    {formatCurrency(latestRateChange.previous.amount)} for {effectiveMonthLabel}?
+                  </>
+                }
+                disabled={dismissRate.isPending}
+                onConfirm={() => dismissRate.mutate({ rateId: latestRateChange.latest.id })}
+              />
+            )}
           </>
         ) : (
           <>
@@ -197,62 +233,98 @@ export function InlineRateEditor(props: {
           )}
         />
         <CollapsibleContent className="pt-2">
-          <ul className="flex flex-col gap-1.5">
-            {props.history.map((entry) => {
-              const showDismiss = hasConflictingRates && isRateEffectiveAt(entry, props.viewAsOfAt);
-              return (
-                <li
-                  key={entry.id}
-                  className={cn(
-                    'flex flex-wrap items-center justify-between gap-2 border-l-2 border-muted py-1.5 pl-2.5 text-xs',
-                    props.currentRate.id === entry.id ? 'border-primary/40' : 'opacity-60',
-                  )}
-                >
-                  <div className="flex items-center gap-1">
-                    <span className="font-medium tabular-nums">{formatCurrency(entry.amount)}</span>
-                    {props.currentRate.id === entry.id && <Badge variant="secondary">Current</Badge>}
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-muted-foreground">
-                      <span className="tabular-nums">Effective {format(entry.effectiveFrom, 'MMM yyyy')}</span>
-                      <span className="tabular-nums">Updated {format(entry.createdAt, 'MMM d, yyyy')}</span>
-                    </div>
-                    {showDismiss && (
-                      <RateDismissButton
-                        amount={entry.amount}
-                        disabled={dismissRate.isPending}
-                        onConfirm={() => dismissRate.mutate({ rateId: entry.id })}
-                      />
-                    )}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+          <SmallTable className="bg-transparent shadow-none">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-b-0 hover:bg-transparent">
+                  <TableHead className={cn(smallTableHeadClass, 'h-6')}>Amount</TableHead>
+                  <TableHead className={cn(smallTableHeadClass, 'h-6')}>Effective</TableHead>
+                  <TableHead className={cn(smallTableHeadClass, 'h-6')}>Updated</TableHead>
+                  <TableHead className={cn(smallTableHeadClass, 'h-6 w-8')} />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {props.history.map((entry) => {
+                  const showDismiss = hasConflictingRates && isRateEffectiveAt(entry, props.viewAsOfAt);
+                  return (
+                    <TableRow
+                      key={entry.id}
+                      className={cn(
+                        smallTableRowClass,
+                        props.currentRate.id === entry.id ? 'bg-primary/5' : 'opacity-60',
+                      )}
+                    >
+                      <TableCell className={cn(smallTableCellClass, 'font-medium tabular-nums')}>
+                        <span className="inline-flex items-center gap-1">
+                          {formatCurrency(entry.amount)}
+                          {props.currentRate.id === entry.id && <Badge variant="secondary">Current</Badge>}
+                        </span>
+                      </TableCell>
+                      <TableCell className={cn(smallTableCellClass, 'text-muted-foreground tabular-nums')}>
+                        {format(entry.effectiveFrom, 'MMM yyyy')}
+                      </TableCell>
+                      <TableCell className={cn(smallTableCellClass, 'text-muted-foreground tabular-nums')}>
+                        {format(entry.createdAt, 'MMM d, yyyy')}
+                      </TableCell>
+                      <TableCell className={cn(smallTableCellClass, 'text-right')}>
+                        {showDismiss && (
+                          <RateDismissButton
+                            amount={entry.amount}
+                            disabled={dismissRate.isPending}
+                            onConfirm={() => dismissRate.mutate({ rateId: entry.id })}
+                          />
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </SmallTable>
         </CollapsibleContent>
       </Collapsible>
     </div>
   );
 }
 
-function RateDismissButton(props: { amount: number; disabled?: boolean; onConfirm: () => void }) {
+function RateDismissButton(props: {
+  amount?: number;
+  disabled?: boolean;
+  onConfirm: () => void;
+  variant?: 'icon' | 'button';
+  label?: string;
+  message?: ReactNode;
+}) {
   const [open, setOpen] = useState(false);
+  const isButton = props.variant === 'button';
 
   return (
     <Tooltip open={open} onOpenChange={setOpen}>
       <TooltipTrigger
         render={
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-xs"
-            disabled={props.disabled}
-            aria-label={`Dismiss ${formatCurrency(props.amount)} rate`}
-            onClick={() => setOpen(true)}
-          >
-            <XIcon />
-          </Button>
+          isButton ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7"
+              disabled={props.disabled}
+              onClick={() => setOpen(true)}
+            >
+              {props.label ?? 'Dismiss'}
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              disabled={props.disabled}
+              aria-label={`Dismiss ${formatCurrency(props.amount ?? 0)} rate`}
+              onClick={() => setOpen(true)}
+            >
+              <XIcon />
+            </Button>
+          )
         }
       />
       <TooltipContent
@@ -260,8 +332,12 @@ function RateDismissButton(props: { amount: number; disabled?: boolean; onConfir
         className="flex max-w-52 flex-col items-stretch gap-2 p-2 text-background **:text-background"
       >
         <p className="text-xs/relaxed">
-          Dismiss {formatCurrency(props.amount)}? This permanently removes this rate revision for the selected view
-          date.
+          {props.message ?? (
+            <>
+              Dismiss {formatCurrency(props.amount ?? 0)}? This permanently removes this rate revision for the selected
+              view date.
+            </>
+          )}
         </p>
         <div className="flex gap-1">
           <Button

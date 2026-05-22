@@ -58,20 +58,37 @@ export function PaymentCategoriesSkeleton() {
   return (
     <section className="flex flex-col gap-2">
       <Skeleton className="h-3.5 w-32" />
-      <div className="divide-y divide-border">
-        {Array.from({ length: 2 }, (_, index) => (
-          <div key={index} className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <Skeleton className="h-3.5 w-36" />
-              <Skeleton className="ml-auto h-3.5 w-20" />
-            </div>
-            <div className="flex flex-wrap items-end gap-2">
-              <Skeleton className="h-7 w-28" />
-              <Skeleton className="h-7 w-20" />
-              <Skeleton className="h-7 w-24" />
-            </div>
-          </div>
-        ))}
+      <div className="overflow-hidden rounded-md border bg-card shadow-sm">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-b-0 hover:bg-transparent">
+              <TableHead className="h-7 bg-muted/40 px-2">
+                <Skeleton className="h-3 w-14" />
+              </TableHead>
+              <TableHead className="h-7 bg-muted/40 px-2">
+                <Skeleton className="h-3 w-12" />
+              </TableHead>
+              <TableHead className="h-7 bg-muted/40 px-2 text-right">
+                <Skeleton className="ml-auto h-3 w-8" />
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: 2 }, (_, index) => (
+              <TableRow key={index} className="hover:bg-transparent">
+                <TableCell className="px-2 py-1.5">
+                  <Skeleton className="h-3.5 w-28" />
+                </TableCell>
+                <TableCell className="px-2 py-1.5">
+                  <Skeleton className="h-3.5 w-16" />
+                </TableCell>
+                <TableCell className="px-2 py-1.5 text-right">
+                  <Skeleton className="ml-auto h-3.5 w-14" />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     </section>
   );
@@ -84,20 +101,37 @@ export function PayslipsSectionSkeleton() {
         <Skeleton className="h-3.5 w-16" />
         <Skeleton className="h-6 w-24" />
       </div>
-      <div className="divide-y divide-border">
-        {Array.from({ length: 2 }, (_, index) => (
-          <PayslipPanelSkeleton key={index} />
-        ))}
+      <div className="overflow-hidden rounded-md border bg-card shadow-sm">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-b-0 hover:bg-transparent">
+              <TableHead className="h-7 w-8 bg-muted/40 px-1" />
+              <TableHead className="h-7 bg-muted/40 px-2">
+                <Skeleton className="h-3 w-10" />
+              </TableHead>
+              <TableHead className="h-7 bg-muted/40 px-2 text-right">
+                <Skeleton className="ml-auto h-3 w-12" />
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: 2 }, (_, index) => (
+              <TableRow key={index} className="hover:bg-transparent">
+                <TableCell className="w-8 px-1 py-1.5">
+                  <Skeleton className="size-3.5" />
+                </TableCell>
+                <TableCell className="px-2 py-1.5">
+                  <Skeleton className="h-3.5 w-20" />
+                </TableCell>
+                <TableCell className="px-2 py-1.5 text-right">
+                  <Skeleton className="ml-auto h-3.5 w-14" />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     </section>
-  );
-}
-
-export function PayslipPanelSkeleton() {
-  return (
-    <div className="py-4 first:pt-0 last:pb-0">
-      <Skeleton className="h-8 w-full" />
-    </div>
   );
 }
 

@@ -22,8 +22,14 @@ export function hasConflictingRatesAt<T extends { effectiveFrom: Date }>(rates: 
   return getRatesEffectiveAt(rates, at).length > 1;
 }
 
+export function getLatestRateChange<T extends { effectiveFrom: Date; createdAt: Date }>(rates: T[], at: Date) {
+  const effective = [...getRatesEffectiveAt(rates, at)].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  if (effective.length < 2) return null;
+  return { latest: effective[0]!, previous: effective[1]! };
+}
+
 export function findCurrentRateForCategory(
-  rates: Array<Pick<CategoryRate, 'paymentCategoryId' | 'effectiveFrom'>>,
+  rates: Array<Pick<CategoryRate, 'paymentCategoryId' | 'effectiveFrom' | 'amountCents'>>,
   paymentCategoryId: number,
   at: Date = new Date(),
 ) {

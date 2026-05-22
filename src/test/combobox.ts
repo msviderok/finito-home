@@ -24,7 +24,7 @@ export async function selectComboboxOption(placeholder: string, optionLabel: str
 }
 
 export function getHoursInputForCategory(categoryLabel: string) {
-  const row = screen.getByText(categoryLabel).closest('[class*="grid"]');
+  const row = screen.getByText(categoryLabel).closest('tr');
   if (!row) throw new Error(`Line item row not found for ${categoryLabel}`);
   return within(row as HTMLElement).getByRole('textbox');
 }

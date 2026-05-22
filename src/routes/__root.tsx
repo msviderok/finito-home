@@ -1,29 +1,16 @@
 import { MonthPickerField } from '@/components/MonthPickerField';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Alert, AlertTitle } from '@/components/ui/alert';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarHeader,
-  SidebarInset,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-} from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useViewAsOf, ViewAsOfProvider } from '@/components/ViewAsOfProvider';
 import type { AppRouter } from '@/lib/trpc';
 import appCss from '@/styles.css?url';
 import type { QueryClient } from '@tanstack/react-query';
-import { createRootRouteWithContext, HeadContent, Link, Scripts, useRouterState } from '@tanstack/react-router';
+import { createRootRouteWithContext, HeadContent, Scripts } from '@tanstack/react-router';
 import type { TRPCOptionsProxy } from '@trpc/tanstack-react-query';
 import { format } from 'date-fns';
-import { AlertTriangleIcon, UsersIcon } from 'lucide-react';
+import { AlertTriangleIcon } from 'lucide-react';
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -52,28 +39,15 @@ function RootDocument(props: { children: React.ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body className="@max/main:mx-auto container mx-auto flex max-w-7xl flex-col">
         <ViewAsOfProvider>
           <TooltipProvider>
-            <SidebarProvider
-              style={
-                {
-                  '--sidebar-width': 'calc(var(--spacing) * 72)',
-                  '--header-height': 'calc(var(--spacing) * 12)',
-                } as React.CSSProperties
-              }
-            >
-              <AppSidebar />
-              <SidebarInset>
-                <AppNavigation />
-                <div className="flex flex-1 flex-col">
-                  <div className="@container/main flex flex-1 flex-col gap-2">
-                    <div className="flex flex-col gap-4 p-4 md:gap-6 md:p-6">{props.children}</div>
-                  </div>
-                </div>
-              </SidebarInset>
-            </SidebarProvider>
-
+            <AppNavigation />
+            <main className="flex flex-1 flex-col">
+              <div className="@container/main flex flex-1 flex-col gap-2">
+                <div className="flex flex-col gap-4 p-4 md:gap-6 md:p-6">{props.children}</div>
+              </div>
+            </main>
             <Toaster />
           </TooltipProvider>
         </ViewAsOfProvider>
@@ -84,13 +58,12 @@ function RootDocument(props: { children: React.ReactNode }) {
   );
 }
 
-function AppSidebar() {
-  const { viewAsOfMonth, setViewAsOfMonth } = useViewAsOf();
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
+function AppNavigation() {
+  const { isRetroactiveView, viewAsOfMonth, setViewAsOfMonth } = useViewAsOf();
 
   return (
-    <Sidebar>
-      <SidebarHeader className="flex-row items-center justify-between">
+    <header className="flex h-12 shrink-0 items-center gap-2 border-b">
+      <div className="flex w-full items-center justify-between gap-2 px-4 md:gap-4 md:px-6">
         <div className="flex items-center justify-between gap-2">
           <ThemeToggle />
           <MonthPickerField
@@ -100,36 +73,6 @@ function AppSidebar() {
             onChange={setViewAsOfMonth}
           />
         </div>
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  isActive={pathname === '/employees'}
-                  render={<Link to="/employees" />}
-                  tooltip="Employee Employees View"
-                >
-                  <UsersIcon />
-                  <span>Employee Employees View</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
-  );
-}
-
-function AppNavigation() {
-  const { isRetroactiveView, viewAsOfMonth } = useViewAsOf();
-
-  return (
-    <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
-      <div className="flex w-full items-center justify-between gap-2 px-4 md:gap-4 md:px-6">
-        <SidebarTrigger />
         {isRetroactiveView && (
           <Alert className="max-w-max border-0 bg-transparent text-amber-400">
             <AlertTriangleIcon />
