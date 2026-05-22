@@ -1,4 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export function EmployeesTableSkeleton() {
@@ -40,17 +41,40 @@ export function EmployeesTableSkeleton() {
 
 export function EmployeeProfileSkeleton() {
   return (
-    <section>
-      <Skeleton className="mb-3 h-3 w-12" />
-      <dl className="grid gap-3 sm:grid-cols-3">
-        {Array.from({ length: 3 }, (_, index) => (
-          <div key={index} className="min-w-0">
-            <Skeleton className="h-2.5 w-14" />
-            <Skeleton className="mt-1 h-3.5 w-24" />
-          </div>
-        ))}
-      </dl>
-    </section>
+    <div className="overflow-hidden rounded-lg border bg-card ring-1 ring-primary/20">
+      <Table>
+        <TableHeader>
+          <TableRow className="border-b-0 hover:bg-transparent">
+            <TableHead className="h-8 w-8 bg-muted/40 px-2" />
+            <TableHead className="h-8 bg-muted/40 px-3">
+              <Skeleton className="h-3 w-10" />
+            </TableHead>
+            <TableHead className="h-8 bg-muted/40 px-3">
+              <Skeleton className="h-3 w-14" />
+            </TableHead>
+            <TableHead className="h-8 bg-muted/40 px-3 text-right">
+              <Skeleton className="ml-auto h-3 w-8" />
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow className="border-x-0 hover:bg-transparent">
+            <TableCell className="w-8 px-2">
+              <Skeleton className="size-3.5" />
+            </TableCell>
+            <TableCell className="px-3">
+              <Skeleton className="h-3.5 w-28" />
+            </TableCell>
+            <TableCell className="px-3">
+              <Skeleton className="h-3.5 w-24" />
+            </TableCell>
+            <TableCell className="px-3 text-right">
+              <Skeleton className="ml-auto h-3.5 w-14" />
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </div>
   );
 }
 
@@ -135,13 +159,18 @@ export function PayslipsSectionSkeleton() {
   );
 }
 
-export function EmployeePanelSkeleton() {
+export function EmployeePanelSkeleton(props: { className?: string }) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto p-4 lg:max-h-[calc(100svh-var(--header-height)-3rem)]">
+    <div className={cn('flex min-h-0 flex-1 flex-col gap-4', props.className)}>
+      <div>
+        <Skeleton className="h-5 w-28" />
+        <Skeleton className="mt-1.5 h-4 w-48" />
+      </div>
       <EmployeeProfileSkeleton />
-      <PaymentCategoriesSkeleton />
-      <Skeleton className="h-px w-full" />
-      <PayslipsSectionSkeleton />
+      <div className="flex flex-col gap-6">
+        <PaymentCategoriesSkeleton />
+        <PayslipsSectionSkeleton />
+      </div>
     </div>
   );
 }
