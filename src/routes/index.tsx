@@ -146,13 +146,12 @@ function EmployeesTable(props: {
             <TableHead className="h-8 w-8 bg-muted/40 px-2" />
             <TableHead className="h-8 bg-muted/40 px-3 text-xs text-muted-foreground">Name</TableHead>
             <TableHead className="h-8 bg-muted/40 px-3 text-xs text-muted-foreground">Birthday</TableHead>
-            <TableHead className="h-8 bg-muted/40 px-3 text-right text-xs text-muted-foreground">Age</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {props.employees.length === 0 && (
             <TableRow className="hover:bg-transparent">
-              <TableCell colSpan={4} className="px-3 py-8 text-center text-muted-foreground">
+              <TableCell colSpan={3} className="px-3 py-8 text-center text-muted-foreground">
                 No employees found.
               </TableCell>
             </TableRow>
@@ -185,10 +184,7 @@ function EmployeesTable(props: {
                   </span>
                 </TableCell>
                 <TableCell className="px-3 text-muted-foreground tabular-nums">
-                  {format(employee.birthday, 'MMM d, yyyy')}
-                </TableCell>
-                <TableCell className="px-3 text-right text-muted-foreground tabular-nums">
-                  {employee.age} years
+                  {format(employee.birthday, 'MMM dd, yyyy')}
                 </TableCell>
               </TableRow>
             );

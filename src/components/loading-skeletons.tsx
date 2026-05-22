@@ -8,28 +8,26 @@ export function EmployeesTableSkeleton() {
       <Table>
         <TableHeader>
           <TableRow className="border-b-0 hover:bg-transparent">
+            <TableHead className="h-8 w-8 bg-muted/40 px-2" />
             <TableHead className="h-8 bg-muted/40 px-3">
               <Skeleton className="h-3 w-10" />
             </TableHead>
             <TableHead className="h-8 bg-muted/40 px-3">
-              <Skeleton className="h-3 w-14" />
-            </TableHead>
-            <TableHead className="h-8 bg-muted/40 px-3 text-right">
-              <Skeleton className="ml-auto h-3 w-8" />
+              <Skeleton className="h-3 w-20" />
             </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {Array.from({ length: 5 }, (_, index) => (
             <TableRow key={index} className="border-x-0 hover:bg-transparent">
+              <TableCell className="w-8 px-2">
+                <Skeleton className="size-3.5" />
+              </TableCell>
               <TableCell className="px-3">
                 <Skeleton className="h-3.5 w-28" />
               </TableCell>
               <TableCell className="px-3">
-                <Skeleton className="h-3.5 w-24" />
-              </TableCell>
-              <TableCell className="px-3 text-right">
-                <Skeleton className="ml-auto h-3.5 w-14" />
+                <Skeleton className="h-3.5 w-32" />
               </TableCell>
             </TableRow>
           ))}
@@ -50,10 +48,7 @@ export function EmployeeProfileSkeleton() {
               <Skeleton className="h-3 w-10" />
             </TableHead>
             <TableHead className="h-8 bg-muted/40 px-3">
-              <Skeleton className="h-3 w-14" />
-            </TableHead>
-            <TableHead className="h-8 bg-muted/40 px-3 text-right">
-              <Skeleton className="ml-auto h-3 w-8" />
+              <Skeleton className="h-3 w-20" />
             </TableHead>
           </TableRow>
         </TableHeader>
@@ -66,10 +61,7 @@ export function EmployeeProfileSkeleton() {
               <Skeleton className="h-3.5 w-28" />
             </TableCell>
             <TableCell className="px-3">
-              <Skeleton className="h-3.5 w-24" />
-            </TableCell>
-            <TableCell className="px-3 text-right">
-              <Skeleton className="ml-auto h-3.5 w-14" />
+              <Skeleton className="h-3.5 w-32" />
             </TableCell>
           </TableRow>
         </TableBody>

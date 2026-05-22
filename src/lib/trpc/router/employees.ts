@@ -7,7 +7,7 @@ import { protectedProcedure } from '../trpc';
 export const employees = {
   list: protectedProcedure.query(async ({ ctx }) => {
     const employees = await ctx.db.query.employees.findMany({ orderBy: { name: 'asc' } });
-    return employees.map(toEmployee);
+    return employees;
   }),
 
   get: protectedProcedure.input(v.object({ id: v.number() })).query(async ({ ctx, input }) => {
@@ -19,7 +19,7 @@ export const employees = {
       throw new TRPCError({ code: 'NOT_FOUND' });
     }
 
-    return toEmployee(employee);
+    return employee;
   }),
 
   payslips: {
@@ -121,18 +121,3 @@ export const employees = {
     }),
   },
 } satisfies TRPCRouterRecord;
-
-function toEmployee(employee: { id: number; name: string; birthday: Date }) {
-  return {
-    ...employee,
-    age: getAge(employee.birthday),
-  };
-}
-
-function getAge(birthday: Date) {
-  const today = new Date();
-  let age = today.getFullYear() - birthday.getFullYear();
-  const birthdayThisYear = new Date(today.getFullYear(), birthday.getMonth(), birthday.getDate());
-  if (today < birthdayThisYear) age -= 1;
-  return age;
-}
