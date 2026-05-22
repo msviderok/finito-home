@@ -1,5 +1,6 @@
 import { MonthPickerField } from '@/components/MonthPickerField';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { PayslipPanelSkeleton, PayslipsSectionSkeleton } from '@/components/loading-skeletons';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import {
   Combobox,
@@ -32,12 +33,18 @@ type CategoryOption = {
 export function PayslipsSection(props: { employeeId: number; onCreatePayslip: any }) {
   const trpc = useTRPC();
   const [showForm, setShowForm] = useState(false);
-  const { data: payslips = [] } = useQuery(trpc.employees.payslips.list.queryOptions({ employeeId: props.employeeId }));
+  const { data: payslips = [], isPending } = useQuery(
+    trpc.employees.payslips.list.queryOptions({ employeeId: props.employeeId }),
+  );
+
+  if (isPending) {
+    return <PayslipsSectionSkeleton />;
+  }
 
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold">Pay slips</h2>
+        <h2 className="text-xs font-semibold">Pay slips</h2>
         {showForm ? (
           <Button type="submit" form="add-payslip-form" size="sm">
             Save
@@ -62,26 +69,30 @@ export function PayslipsSection(props: { employeeId: number; onCreatePayslip: an
       {payslips.length === 0 ? (
         <p className="rounded-md border border-dashed p-3 text-muted-foreground">No pay slips yet.</p>
       ) : (
-        <Accordion multiple defaultValue={payslips.map((payslip) => `payslip-${payslip.id}`)}>
+        <div className="flex flex-col gap-3">
           {payslips.map((payslip) => (
-            <PayslipAccordionItem key={payslip.id} payslipId={payslip.id} employeeId={props.employeeId} />
+            <PayslipPanel key={payslip.id} payslipId={payslip.id} employeeId={props.employeeId} />
           ))}
-        </Accordion>
+        </div>
       )}
     </section>
   );
 }
 
-export function PayslipAccordionItem(props: { payslipId: number; employeeId: number }) {
+export function PayslipPanel(props: { payslipId: number; employeeId: number }) {
   const trpc = useTRPC();
   const { viewAsOfAt } = useViewAsOf();
-  const { data: payslip } = useQuery(trpc.employees.payslips.get.queryOptions({ id: props.payslipId }));
-  const { data: categoryRates = [] } = useQuery(
+  const { data: payslip, isPending: payslipLoading } = useQuery(
+    trpc.employees.payslips.get.queryOptions({ id: props.payslipId }),
+  );
+  const { data: categoryRates = [], isPending: ratesLoading } = useQuery(
     trpc.paymentCategories.forEmployee.queryOptions({ employeeId: props.employeeId, effectiveDate: viewAsOfAt }),
   );
   const categoryGroups = payslip ? groupCategoryRates(categoryRates, payslip.paymentDate) : [];
 
-  if (!payslip) return null;
+  if (payslipLoading || ratesLoading || !payslip) {
+    return <PayslipPanelSkeleton />;
+  }
 
   const total = payslip.lineItems.reduce((sum, lineItem) => {
     const group = getCategoryGroupAt(categoryGroups, lineItem.paymentCategoryId);
@@ -89,38 +100,36 @@ export function PayslipAccordionItem(props: { payslipId: number; employeeId: num
   }, 0);
 
   return (
-    <AccordionItem value={`payslip-${payslip.id}`}>
-      <AccordionTrigger className="items-center">
-        <span className="font-medium tabular-nums">{formatPayslipPaymentDate(payslip.paymentDate)}</span>
-        <span className="ml-auto font-medium text-muted-foreground tabular-nums">{formatCurrency(total)}</span>
-      </AccordionTrigger>
-      <AccordionContent>
-        <div className="flex flex-col gap-2">
-          {payslip.lineItems.map((lineItem) => {
-            const group = getCategoryGroupAt(categoryGroups, lineItem.paymentCategoryId);
-            const lineTotal = group ? group.currentRate.amount * Number(lineItem.units) : 0;
-            return (
-              <div
-                key={lineItem.id}
-                className="grid gap-2 rounded-md border px-2 py-1.5 sm:grid-cols-[1fr_auto_auto_auto]"
-              >
-                <span className="font-medium">{lineItem.paymentCategory?.name ?? 'Payment category'}</span>
-                <span className="text-muted-foreground tabular-nums">{Number(lineItem.units).toFixed(2)} hours</span>
-                <span className="text-muted-foreground tabular-nums">
-                  {group ? `${formatCurrency(group.currentRate.amount)}/hr` : '—'}
-                </span>
-                <span className="font-medium tabular-nums">{formatCurrency(lineTotal)}</span>
-              </div>
-            );
-          })}
-          <Separator />
-          <div className="flex justify-end gap-3 font-semibold">
-            <span>Total</span>
-            <span className="tabular-nums">{formatCurrency(total)}</span>
-          </div>
+    <article className="flex flex-col gap-3 rounded-md border p-3">
+      <div className="flex items-center gap-3">
+        <span className="text-xs font-medium tabular-nums">{formatPayslipPaymentDate(payslip.paymentDate)}</span>
+        <span className="ml-auto text-xs font-medium text-muted-foreground tabular-nums">{formatCurrency(total)}</span>
+      </div>
+      <div className="flex flex-col gap-2">
+        {payslip.lineItems.map((lineItem) => {
+          const group = getCategoryGroupAt(categoryGroups, lineItem.paymentCategoryId);
+          const lineTotal = group ? group.currentRate.amount * Number(lineItem.units) : 0;
+          return (
+            <div
+              key={lineItem.id}
+              className="grid gap-2 rounded-md border px-2 py-1.5 sm:grid-cols-[1fr_auto_auto_auto]"
+            >
+              <span className="text-xs font-medium">{lineItem.paymentCategory?.name ?? 'Payment category'}</span>
+              <span className="text-muted-foreground tabular-nums">{Number(lineItem.units).toFixed(2)} hours</span>
+              <span className="text-muted-foreground tabular-nums">
+                {group ? `${formatCurrency(group.currentRate.amount)}/hr` : '—'}
+              </span>
+              <span className="text-xs font-medium tabular-nums">{formatCurrency(lineTotal)}</span>
+            </div>
+          );
+        })}
+        <Separator />
+        <div className="flex justify-end gap-3 text-xs font-semibold">
+          <span>Total</span>
+          <span className="tabular-nums">{formatCurrency(total)}</span>
         </div>
-      </AccordionContent>
-    </AccordionItem>
+      </div>
+    </article>
   );
 }
 
@@ -145,7 +154,7 @@ function AddPayslipForm(props: { employeeId: number; onCreatePayslip: any }) {
         : viewAsOfMonth;
     return viewAsOfInstant(month);
   }, [paymentMonth, viewAsOfMonth]);
-  const { data: categoryRates = [] } = useQuery(
+  const { data: categoryRates = [], isPending: categoriesLoading } = useQuery(
     trpc.paymentCategories.forEmployee.queryOptions({ employeeId: props.employeeId, effectiveDate: paymentAt }),
   );
   const categoryGroups = groupCategoryRates(categoryRates ?? [], paymentAt);
@@ -173,7 +182,7 @@ function AddPayslipForm(props: { employeeId: number; onCreatePayslip: any }) {
       <Field of={form} path={['paymentDate']}>
         {(field) => (
           <label className="flex flex-col gap-1 self-start">
-            <span className="text-muted-foreground">Payment month</span>
+            <span className="text-xs text-muted-foreground">Payment month</span>
             <MonthPickerField
               aria-label="Payment month"
               value={
@@ -194,28 +203,37 @@ function AddPayslipForm(props: { employeeId: number; onCreatePayslip: any }) {
 
           return (
             <div className="flex flex-col gap-2">
-              {lineItems.items.map((itemId, index) => (
-                <DraftLineItemRow
-                  key={itemId}
-                  form={form}
-                  index={index}
-                  categoryOptions={categoryOptions}
-                  onRemove={() => remove(form, { path: ['lineItems'], at: index })}
+              {categoriesLoading && (
+                <div className="flex flex-col gap-2">
+                  <Skeleton className="h-14 w-full rounded-md" />
+                  <Skeleton className="h-7 w-24" />
+                </div>
+              )}
+              {!categoriesLoading &&
+                lineItems.items.map((itemId, index) => (
+                  <DraftLineItemRow
+                    key={itemId}
+                    form={form}
+                    index={index}
+                    categoryOptions={categoryOptions}
+                    onRemove={() => remove(form, { path: ['lineItems'], at: index })}
+                  />
+                ))}
+              {!categoriesLoading && (
+                <AddPaymentControl
+                  options={availableOptions}
+                  onSelect={(option) => {
+                    insert(form, {
+                      path: ['lineItems'],
+                      initialInput: {
+                        paymentCategoryId: option.value,
+                        hours: '',
+                      },
+                    });
+                  }}
                 />
-              ))}
-              <AddPaymentControl
-                options={availableOptions}
-                onSelect={(option) => {
-                  insert(form, {
-                    path: ['lineItems'],
-                    initialInput: {
-                      paymentCategoryId: option.value,
-                      hours: '',
-                    },
-                  });
-                }}
-              />
-              {availableOptions.length === 0 && draftItems.length > 0 && (
+              )}
+              {!categoriesLoading && availableOptions.length === 0 && draftItems.length > 0 && (
                 <p className="text-muted-foreground">All categories added</p>
               )}
               {lineItems.errors && <p className="text-destructive">{lineItems.errors[0]}</p>}
@@ -312,13 +330,13 @@ function DraftLineItemRow(props: {
           <div className="grid items-end gap-2 rounded-md border px-2 py-2 sm:grid-cols-[1fr_auto_8rem_auto_auto]">
             <input {...categoryField.props} type="hidden" value={String(categoryField.input ?? '')} />
             <div className="flex flex-col gap-0.5">
-              <span className="font-medium">{category?.label ?? 'Payment category'}</span>
+              <span className="text-xs font-medium">{category?.label ?? 'Payment category'}</span>
               <span className="text-muted-foreground tabular-nums">
                 {category ? `${formatCurrency(category.rateAmount)}/hr` : ''}
               </span>
             </div>
             <label className="flex flex-col gap-1">
-              <span className="text-muted-foreground">Hours</span>
+              <span className="text-xs text-muted-foreground">Hours</span>
               <Field of={props.form} path={['lineItems', props.index, 'hours']}>
                 {(hoursField) => {
                   const hours = Number(hoursField.input);
@@ -345,7 +363,7 @@ function DraftLineItemRow(props: {
                 const hours = Number(hoursField.input);
                 const total = category && Number.isFinite(hours) ? category.rateAmount * hours : 0;
                 return (
-                  <span className="pb-1 font-medium tabular-nums">
+                  <span className="pb-1 text-xs font-medium tabular-nums">
                     {hoursField.input ? formatCurrency(total) : formatCurrency(0)}
                   </span>
                 );

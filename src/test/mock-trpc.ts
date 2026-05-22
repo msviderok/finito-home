@@ -1,7 +1,16 @@
 import { vi } from 'vitest';
 import { categoryRatesByEmployee } from './mock-trpc-store';
 
+export const dismissRateMutation = vi.fn();
+
 const trpc = {
+  rates: {
+    dismiss: {
+      mutationOptions: () => ({
+        mutationFn: dismissRateMutation,
+      }),
+    },
+  },
   paymentCategories: {
     forEmployee: {
       queryOptions: ({ employeeId }: { employeeId: number }) => {

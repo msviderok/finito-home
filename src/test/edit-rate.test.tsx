@@ -19,6 +19,7 @@ describe('edit rate', () => {
         currentRate={currentRate}
         history={hourlyCategoryRates}
         employeeId={1}
+        viewAsOfAt={new Date('2026-03-01T00:00:00')}
         onCreateRate={onCreateRate}
       />,
       { initialViewAsOfMonth: new Date('2026-03-01T00:00:00') },
@@ -36,8 +37,8 @@ describe('edit rate', () => {
       paymentCategoryId: 1,
       effectiveFrom: startOfMonth(new Date('2026-03-01T00:00:00')),
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Rate History' }));
-    expect(screen.getByText(`Updated ${format(previousRate.createdAt, 'MMMM d, yyyy')}`)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Rate history' }));
+    expect(screen.getByText(`Updated ${format(previousRate.createdAt, 'MMM d, yyyy')}`)).toBeTruthy();
     expect(screen.getByText(`Effective ${format(previousRate.effectiveFrom, 'MMM yyyy')}`)).toBeTruthy();
   });
 });

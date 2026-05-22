@@ -1,12 +1,16 @@
 import { MonthPickerField } from '@/components/MonthPickerField';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Alert, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangleIcon } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
   SidebarHeader,
   SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
@@ -16,9 +20,10 @@ import { useViewAsOf, ViewAsOfProvider } from '@/components/ViewAsOfProvider';
 import type { AppRouter } from '@/lib/trpc';
 import appCss from '@/styles.css?url';
 import type { QueryClient } from '@tanstack/react-query';
-import { createRootRouteWithContext, HeadContent, Scripts } from '@tanstack/react-router';
+import { createRootRouteWithContext, HeadContent, Link, Scripts, useRouterState } from '@tanstack/react-router';
 import type { TRPCOptionsProxy } from '@trpc/tanstack-react-query';
 import { format } from 'date-fns';
+import { AlertTriangleIcon, UsersIcon } from 'lucide-react';
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -81,6 +86,8 @@ function RootDocument(props: { children: React.ReactNode }) {
 
 function AppSidebar() {
   const { viewAsOfMonth, setViewAsOfMonth } = useViewAsOf();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+
   return (
     <Sidebar>
       <SidebarHeader className="flex-row items-center justify-between">
@@ -94,7 +101,24 @@ function AppSidebar() {
           />
         </div>
       </SidebarHeader>
-      <SidebarContent>123</SidebarContent>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={pathname === '/employees'}
+                  render={<Link to="/employees" />}
+                  tooltip="Employee Employees View"
+                >
+                  <UsersIcon />
+                  <span>Employee Employees View</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
     </Sidebar>
   );
 }

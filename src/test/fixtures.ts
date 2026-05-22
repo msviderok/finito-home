@@ -27,6 +27,24 @@ export const hourlyCategoryRates: CategoryRate[] = [
   }),
 ];
 
+/** Two rates effective for the same retroactive month (overwrite). */
+export const overwrittenHourlyRates: CategoryRate[] = [
+  createCategoryRate({
+    id: 10,
+    amountCents: 2_500,
+    effectiveFrom: new Date('2026-01-01T00:00:00'),
+    createdAt: new Date('2026-01-15T00:00:00'),
+    amount: 25,
+  }),
+  createCategoryRate({
+    id: 11,
+    amountCents: 2_800,
+    effectiveFrom: new Date('2026-01-01T00:00:00'),
+    createdAt: new Date('2026-03-10T00:00:00'),
+    amount: 28,
+  }),
+];
+
 export const payslipCategoryRates: CategoryRate[] = [
   createCategoryRate(),
   createCategoryRate({

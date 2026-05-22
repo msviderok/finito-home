@@ -10,8 +10,16 @@ export type CategoryRateGroup = {
   rates: CategoryRate[];
 };
 
-function rateEffectiveAt(rate: { effectiveFrom: Date }, at: Date) {
+export function isRateEffectiveAt(rate: { effectiveFrom: Date }, at: Date) {
   return rate.effectiveFrom.getTime() <= at.getTime();
+}
+
+export function getRatesEffectiveAt<T extends { effectiveFrom: Date }>(rates: T[], at: Date) {
+  return rates.filter((rate) => isRateEffectiveAt(rate, at));
+}
+
+export function hasConflictingRatesAt<T extends { effectiveFrom: Date }>(rates: T[], at: Date) {
+  return getRatesEffectiveAt(rates, at).length > 1;
 }
 
 export function findCurrentRateForCategory(
@@ -20,7 +28,7 @@ export function findCurrentRateForCategory(
   at: Date = new Date(),
 ) {
   const categoryRates = rates.filter(
-    (rate) => rate.paymentCategoryId === paymentCategoryId && rateEffectiveAt(rate, at),
+    (rate) => rate.paymentCategoryId === paymentCategoryId && isRateEffectiveAt(rate, at),
   );
   if (categoryRates.length === 0) return undefined;
   return categoryRates.sort((a, b) => b.effectiveFrom.getTime() - a.effectiveFrom.getTime())[0];
@@ -40,7 +48,7 @@ export function groupCategoryRates(rates: CategoryRate[], at: Date = new Date())
 
   return [...groups.entries()].map(([paymentCategoryId, groupRates]) => {
     const sortedRates = [...groupRates].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-    const currentRate = sortedRates.find((rate) => rateEffectiveAt(rate, at)) ?? sortedRates[sortedRates.length - 1]!;
+    const currentRate = sortedRates.find((rate) => isRateEffectiveAt(rate, at)) ?? sortedRates[sortedRates.length - 1]!;
     return {
       paymentCategoryId,
       paymentCategory: currentRate.paymentCategory,
