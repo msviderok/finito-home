@@ -1,17 +1,13 @@
-import type { inferRouterOutputs } from '@trpc/server';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import type { PayslipCreateMutationInput } from '@/db/schema/payslips';
-import type { AppRouter } from '@/lib/trpc';
-import { trpc } from '@/router';
+import { useTRPC, type RouterOutputs } from '@/lib/trpc/client';
 import type { CreateRateHandler } from './InlineRateEditor';
 import { PaymentCategoriesSection } from './PaymentCategoriesSection';
 import { PayslipsSection } from './PayslipsSection';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { Separator } from './ui/separator';
 import { format } from 'date-fns';
-
-type RouterOutputs = inferRouterOutputs<AppRouter>;
 
 export type Employee = RouterOutputs['employees']['get'];
 export type CreatePayslipHandler = (input: PayslipCreateMutationInput) => Promise<void> | void;
@@ -51,6 +47,7 @@ export function EmployeeAccordionItem(props: {
   onCreateRate: CreateRateHandler;
   onCreatePayslip: CreatePayslipHandler;
 }) {
+  const trpc = useTRPC();
   const { data: employee } = useQuery(trpc.employees.get.queryOptions({ id: props.employeeId }));
 
   if (!employee) return null;
@@ -75,6 +72,7 @@ export function EmployeeAccordionItem(props: {
 }
 
 export function EmployeeDetails(props: { employeeId: number }) {
+  const trpc = useTRPC();
   const { data: employee } = useQuery(trpc.employees.get.queryOptions({ id: props.employeeId }));
 
   if (!employee) return null;

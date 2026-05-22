@@ -1,34 +1,10 @@
-import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { notifyTRPCError, trpcClient, TRPCProvider, type AppRouter } from '@/lib/trpc/client';
+import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query';
 import { createRouter as createTanStackRouter } from '@tanstack/react-router';
-import { TRPCClientError, createTRPCClient, httpBatchLink } from '@trpc/client';
+import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query';
 import { createTRPCOptionsProxy } from '@trpc/tanstack-react-query';
-import { toast } from 'sonner';
 import superjson from 'superjson';
-import type { AppRouter } from '@/lib/trpc';
 import { routeTree } from './routeTree.gen';
-import { env } from '@/env';
-
-function getTrpcUrl() {
-  if (typeof window !== 'undefined') {
-    return `${window.location.origin}/api/trpc`;
-  }
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}/api/trpc`;
-  }
-  return `http://127.0.0.1:${env.PORT}/api/trpc`;
-}
-
-function isTRPCClientError(error: unknown): error is TRPCClientError<AppRouter> {
-  return error instanceof TRPCClientError;
-}
-
-function notifyTRPCError(error: unknown) {
-  if (typeof window === 'undefined' || !isTRPCClientError(error)) return;
-
-  toast.error('Request failed', {
-    description: error.message,
-  });
-}
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
@@ -44,15 +20,8 @@ const queryClient = new QueryClient({
 });
 
 export const trpc = createTRPCOptionsProxy<AppRouter>({
+  client: trpcClient,
   queryClient,
-  client: createTRPCClient({
-    links: [
-      httpBatchLink({
-        transformer: superjson,
-        url: getTrpcUrl(),
-      }),
-    ],
-  }),
 });
 
 export function getRouter() {
@@ -67,8 +36,8 @@ export function getRouter() {
       trpc,
     },
 
-    Wrap: function WrapComponent(props) {
-      return <QueryClientProvider client={queryClient}>{props.children}</QueryClientProvider>;
+    Wrap(props) {
+      return <TRPCProvider trpcClient={trpcClient} queryClient={queryClient} {...props} />;
     },
     defaultErrorComponent(props) {
       return <div>Error: {props.error.message}</div>;
@@ -79,6 +48,11 @@ export function getRouter() {
     defaultPendingComponent() {
       return <div>Pending...</div>;
     },
+  });
+
+  setupRouterSsrQueryIntegration({
+    router,
+    queryClient,
   });
 
   return router;

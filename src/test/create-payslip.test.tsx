@@ -5,7 +5,7 @@ import { selectComboboxOption, getHoursInputForCategory } from './combobox';
 import { categoryRatesByEmployee } from './mock-trpc-store';
 import { payslipCategoryRates } from './fixtures';
 import { renderPayslipsSection } from './render';
-import { viewAsOfInstant } from '@/lib/view-as-of-date';
+import { viewAsOfInstant } from '@/lib/date';
 
 const may2026ViewAsOfAt = viewAsOfInstant(new Date('2026-05-01'));
 

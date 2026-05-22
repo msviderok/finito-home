@@ -1,10 +1,5 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
-import {
-  currentViewAsOfMonth,
-  isViewingCurrentMonth,
-  parseMonthInputValue,
-  viewAsOfInstant,
-} from '@/lib/view-as-of-date';
+import { currentViewAsOfMonth, isViewingCurrentMonth, parseMonthInputValue, viewAsOfInstant } from '@/lib/date';
 
 type ViewAsOfContextValue = {
   viewAsOfMonth: Date;

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { EmployeePayrollAccordion } from '@/components/EmployeePayrollAccordion';
-import { trpc } from '@/router';
+import { useTRPC } from '@/lib/trpc/client';
 
 export const Route = createFileRoute('/')({
   component: App,
@@ -9,6 +9,7 @@ export const Route = createFileRoute('/')({
 
 function App() {
   const queryClient = useQueryClient();
+  const trpc = useTRPC();
   const { data = [] } = useQuery(trpc.employees.list.queryOptions());
   const createRate = useMutation(
     trpc.paymentCategories.rates.create.mutationOptions({

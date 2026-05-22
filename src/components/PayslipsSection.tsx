@@ -6,8 +6,8 @@ import { useMemo, useState } from 'react';
 import { payslipDraftFormSchema, sanitizeHoursInput } from '@/db/schema/payslips';
 import { getCategoryGroupAt, groupCategoryRates } from '@/lib/category-rates';
 import { formatCurrency } from '@/lib/currency';
-import { formatPayslipPaymentDate, viewAsOfInstant } from '@/lib/view-as-of-date';
-import { trpc } from '@/router';
+import { formatPayslipPaymentDate, viewAsOfInstant } from '@/lib/date';
+import { useTRPC } from '@/lib/trpc/client';
 import type { CreatePayslipHandler } from './EmployeePayrollAccordion';
 import { MonthPicker } from './MonthPicker';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
@@ -24,6 +24,7 @@ type CategoryOption = {
 };
 
 export function PayslipsSection(props: { employeeId: number; onCreatePayslip: CreatePayslipHandler }) {
+  const trpc = useTRPC();
   const [showForm, setShowForm] = useState(false);
   const { data: payslips = [] } = useQuery(trpc.employees.payslips.list.queryOptions({ employeeId: props.employeeId }));
 
@@ -55,7 +56,7 @@ export function PayslipsSection(props: { employeeId: number; onCreatePayslip: Cr
       {payslips.length === 0 ? (
         <p className="rounded-md border border-dashed p-3 text-muted-foreground">No pay slips yet.</p>
       ) : (
-        <Accordion multiple>
+        <Accordion multiple defaultValue={payslips.map((payslip) => `payslip-${payslip.id}`)}>
           {payslips.map((payslip) => (
             <PayslipAccordionItem key={payslip.id} payslipId={payslip.id} employeeId={props.employeeId} />
           ))}
@@ -66,6 +67,7 @@ export function PayslipsSection(props: { employeeId: number; onCreatePayslip: Cr
 }
 
 export function PayslipAccordionItem(props: { payslipId: number; employeeId: number }) {
+  const trpc = useTRPC();
   const { viewAsOfAt } = useViewAsOf();
   const { data: payslip } = useQuery(trpc.employees.payslips.get.queryOptions({ id: props.payslipId }));
   const { data: categoryRates = [] } = useQuery(
@@ -117,6 +119,7 @@ export function PayslipAccordionItem(props: { payslipId: number; employeeId: num
 }
 
 function AddPayslipForm(props: { employeeId: number; onCreatePayslip: CreatePayslipHandler }) {
+  const trpc = useTRPC();
   const { viewAsOfMonth } = useViewAsOf();
   const form = useForm({
     schema: payslipDraftFormSchema,

@@ -1,7 +1,7 @@
 import { useViewAsOf } from '@/contexts/ViewAsOfProvider';
 import { groupCategoryRates } from '@/lib/category-rates';
 import { formatCurrency } from '@/lib/currency';
-import { trpc } from '@/router';
+import { useTRPC } from '@/lib/trpc/client';
 import { useQuery } from '@tanstack/react-query';
 import type { CreateRateHandler } from './InlineRateEditor';
 import { InlineRateEditor } from './InlineRateEditor';
@@ -9,6 +9,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './
 import { Separator } from './ui/separator';
 
 export function PaymentCategoriesSection(props: { employeeId: number; onCreateRate: CreateRateHandler }) {
+  const trpc = useTRPC();
   const { viewAsOfAt } = useViewAsOf();
   const { data: categoryRates = [] } = useQuery(
     trpc.paymentCategories.forEmployee.queryOptions({ employeeId: props.employeeId, effectiveDate: viewAsOfAt }),

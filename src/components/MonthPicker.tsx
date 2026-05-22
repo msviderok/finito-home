@@ -1,5 +1,5 @@
 import { CalendarDays } from 'lucide-react';
-import { formatMonthInputValue, parseMonthInputValue } from '@/lib/view-as-of-date';
+import { formatMonthInputValue, parseMonthInputValue } from '@/lib/date';
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from './ui/input-group';
 
 export function MonthPicker(props: {
