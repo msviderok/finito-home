@@ -14,14 +14,8 @@ describe('create rate', () => {
 
   it('submits a new rate with updated amount and view-as-of effective from', async () => {
     const currentRate = createCategoryRate();
-    renderWithProviders(
-      <InlineRateEditor
-        currentRate={currentRate}
-        history={[currentRate]}
-        employeeId={1}
-        viewAsOfAt={new Date('2026-06-01T00:00:00')}
-        onCreateRate={onCreateRate}
-      />,
+    await renderWithProviders(
+      <InlineRateEditor currentRate={currentRate} history={[currentRate]} employeeId={1} onCreateRate={onCreateRate} />,
       { initialViewAsOfMonth: new Date('2026-06-01T00:00:00') },
     );
 
@@ -40,14 +34,8 @@ describe('create rate', () => {
 
   it('does not submit when rate amount is empty', async () => {
     const currentRate = createCategoryRate();
-    renderWithProviders(
-      <InlineRateEditor
-        currentRate={currentRate}
-        history={[currentRate]}
-        employeeId={1}
-        viewAsOfAt={new Date()}
-        onCreateRate={onCreateRate}
-      />,
+    await renderWithProviders(
+      <InlineRateEditor currentRate={currentRate} history={[currentRate]} employeeId={1} onCreateRate={onCreateRate} />,
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit rate' }));

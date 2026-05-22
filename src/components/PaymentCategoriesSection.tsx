@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
-import { useViewAsOf } from '@/components/ViewAsOfProvider';
+import { useEffectiveDate } from '@/lib/hooks/useEffectiveDate';
 import type { SelectPaymentCategory } from '@/db/schema/paymentCategories';
 import { rateCreateMutationSchema, type RateCreateFormOutput, type SelectRate } from '@/db/schema/rates';
 import {
@@ -37,11 +37,11 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 
 export function PaymentCategoriesSection(props: { employeeId: number; onCreateRate: CreateRateHandler }) {
   const trpc = useTRPC();
-  const { viewAsOfAt } = useViewAsOf();
+  const { effectiveDate } = useEffectiveDate();
   const { data: categoryRates = [], isPending } = useQuery(
-    trpc.paymentCategories.forEmployee.queryOptions({ employeeId: props.employeeId, effectiveDate: viewAsOfAt }),
+    trpc.paymentCategories.forEmployee.queryOptions({ employeeId: props.employeeId }),
   );
-  const categoryGroups = groupCategoryRates(categoryRates, viewAsOfAt);
+  const categoryGroups = groupCategoryRates(categoryRates, effectiveDate);
 
   if (isPending) {
     return <PaymentCategoriesSkeleton />;
@@ -71,7 +71,6 @@ export function PaymentCategoriesSection(props: { employeeId: number; onCreateRa
                     currentRate={group.currentRate}
                     history={group.rates}
                     employeeId={props.employeeId}
-                    viewAsOfAt={viewAsOfAt}
                     onCreateRate={props.onCreateRate}
                   />
                 </TableCell>
@@ -95,14 +94,13 @@ export function InlineRateEditor(props: {
   currentRate: InlineRateEditorRate;
   history: InlineRateEditorRate[];
   employeeId: number;
-  viewAsOfAt: Date;
   onCreateRate?: CreateRateHandler;
 }) {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [draftAmount, setDraftAmount] = useState(() => formatRateAmount(props.currentRate.amountCents / 100));
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const { viewAsOfMonth } = useViewAsOf();
+  const { effectiveDate } = useEffectiveDate();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const dismissRate = useMutation(
@@ -114,9 +112,9 @@ export function InlineRateEditor(props: {
       },
     }),
   );
-  const hasConflictingRates = hasConflictingRatesAt(props.history, props.viewAsOfAt);
-  const latestRateChange = getLatestRateChange(props.history, props.viewAsOfAt);
-  const effectiveMonthLabel = format(startOfMonth(viewAsOfMonth), 'MMM yyyy');
+  const hasConflictingRates = hasConflictingRatesAt(props.history, effectiveDate);
+  const latestRateChange = getLatestRateChange(props.history, effectiveDate);
+  const effectiveMonthLabel = format(startOfMonth(effectiveDate), 'MMM yyyy');
 
   useEffect(() => {
     setDraftAmount(formatRateAmount(props.currentRate.amountCents / 100));
@@ -136,7 +134,7 @@ export function InlineRateEditor(props: {
         amount: parseRateAmountInput(draftAmount),
         employeeId: props.employeeId,
         paymentCategoryId: props.currentRate.paymentCategoryId,
-        effectiveFrom: startOfMonth(viewAsOfMonth),
+        effectiveFrom: startOfMonth(effectiveDate),
       });
       void props.onCreateRate?.(parsed);
       setEditing(false);
@@ -246,7 +244,7 @@ export function InlineRateEditor(props: {
                 </TableHeader>
                 <TableBody>
                   {props.history.map((entry) => {
-                    const showDismiss = hasConflictingRates && isRateEffectiveAt(entry, props.viewAsOfAt);
+                    const showDismiss = hasConflictingRates && isRateEffectiveAt(entry, effectiveDate);
                     return (
                       <TableRow
                         key={entry.id}

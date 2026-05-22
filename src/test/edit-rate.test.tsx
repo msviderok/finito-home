@@ -14,12 +14,11 @@ describe('edit rate', () => {
 
   it('submits revised amount with effective from from retroactive view', async () => {
     const [, previousRate] = hourlyCategoryRates;
-    renderWithProviders(
+    await renderWithProviders(
       <InlineRateEditor
         currentRate={hourlyCategoryRates[0]}
         history={hourlyCategoryRates}
         employeeId={1}
-        viewAsOfAt={new Date('2026-03-01T00:00:00')}
         onCreateRate={onCreateRate}
       />,
       { initialViewAsOfMonth: new Date('2026-03-01T00:00:00') },

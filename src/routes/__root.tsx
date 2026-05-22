@@ -3,7 +3,8 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { Alert, AlertTitle } from '@/components/ui/alert';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { useViewAsOf, ViewAsOfProvider } from '@/components/ViewAsOfProvider';
+import { useEffectiveDate } from '@/lib/hooks/useEffectiveDate';
+import { appSearchSchema } from '@/lib/search';
 import type { AppRouter } from '@/lib/trpc';
 import appCss from '@/styles.css?url';
 import type { QueryClient } from '@tanstack/react-query';
@@ -16,6 +17,7 @@ export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
   trpc: TRPCOptionsProxy<AppRouter>;
 }>()({
+  validateSearch: appSearchSchema,
   head: () => ({
     links: [{ rel: 'stylesheet', href: appCss }],
     meta: [
@@ -40,17 +42,15 @@ function RootDocument(props: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body className="@max/main:mx-auto container mx-auto flex max-w-7xl flex-col">
-        <ViewAsOfProvider>
-          <TooltipProvider>
-            <AppNavigation />
-            <main className="flex flex-1 flex-col">
-              <div className="@container/main flex flex-1 flex-col gap-2">
-                <div className="flex flex-col gap-4 p-4 md:gap-6 md:p-6">{props.children}</div>
-              </div>
-            </main>
-            <Toaster />
-          </TooltipProvider>
-        </ViewAsOfProvider>
+        <TooltipProvider>
+          <AppNavigation />
+          <main className="flex flex-1 flex-col">
+            <div className="@container/main flex flex-1 flex-col gap-2">
+              <div className="flex flex-col gap-4 p-4 md:gap-6 md:p-6">{props.children}</div>
+            </div>
+          </main>
+          <Toaster />
+        </TooltipProvider>
 
         <Scripts />
       </body>
@@ -59,7 +59,7 @@ function RootDocument(props: { children: React.ReactNode }) {
 }
 
 function AppNavigation() {
-  const { isRetroactiveView, viewAsOfMonth, setViewAsOfMonth } = useViewAsOf();
+  const { isRetroactiveView, effectiveDate: viewAsOfMonth, setEffectiveDate: setViewAsOfMonth } = useEffectiveDate();
 
   return (
     <header className="flex h-12 shrink-0 items-center gap-2 border-b">

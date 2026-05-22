@@ -18,7 +18,7 @@ import {
   smallTableRowClass,
 } from '@/components/ui/compact-table';
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useViewAsOf } from '@/components/ViewAsOfProvider';
+import { useEffectiveDate } from '@/lib/hooks/useEffectiveDate';
 import { payslipDraftFormSchema, sanitizeHoursInput } from '@/db/schema/payslips';
 import {
   getCategoryGroupAt,
@@ -106,18 +106,13 @@ export function PayslipsSection(props: { employeeId: number; onCreatePayslip: an
 export function PayslipPanel(props: { payslipId: number; employeeId: number }) {
   const [open, setOpen] = useState(false);
   const trpc = useTRPC();
-  const { viewAsOfAt, viewAsOfMonth } = useViewAsOf();
+  const { effectiveDate } = useEffectiveDate();
   const { data: payslip, isPending: payslipLoading } = useQuery(
     trpc.employees.payslips.get.queryOptions({ id: props.payslipId }),
   );
-  const ratesEffectiveDate = useMemo(() => {
-    if (!payslip) return viewAsOfAt;
-    return new Date(Math.max(viewAsOfAt.getTime(), payslip.paymentDate.getTime(), payslip.createdAt.getTime()));
-  }, [payslip, viewAsOfAt]);
   const { data: categoryRates = [], isPending: ratesLoading } = useQuery(
     trpc.paymentCategories.forEmployee.queryOptions({
       employeeId: props.employeeId,
-      effectiveDate: ratesEffectiveDate,
     }),
   );
 
@@ -136,10 +131,10 @@ export function PayslipPanel(props: { payslipId: number; employeeId: number }) {
     categoryRates,
     payslip.paymentDate,
     payslip.createdAt,
-    viewAsOfAt,
+    effectiveDate,
   );
   const displayTotalCents = differs ? viewTotalCents : baseTotalCents;
-  const viewMonthLabel = format(viewAsOfMonth, 'MMM yyyy');
+  const viewMonthLabel = format(effectiveDate, 'MMM yyyy');
 
   const paymentLabel = formatPayslipPaymentDate(payslip.paymentDate);
 
@@ -343,12 +338,12 @@ function PayslipAdjustedValue(props: { paymentValue: string; viewValue: string; 
 
 function AddPayslipForm(props: { employeeId: number; onCreatePayslip: any }) {
   const trpc = useTRPC();
-  const { viewAsOfMonth } = useViewAsOf();
+  const { effectiveDate } = useEffectiveDate();
   const form = useForm({
     schema: payslipDraftFormSchema,
     initialInput: {
       employeeId: props.employeeId,
-      paymentDate: viewAsOfMonth,
+      paymentDate: effectiveDate,
       lineItems: [],
     },
     validate: 'submit',
@@ -359,11 +354,11 @@ function AddPayslipForm(props: { employeeId: number; onCreatePayslip: any }) {
     const month =
       paymentMonth instanceof Date && !Number.isNaN(paymentMonth.getTime())
         ? startOfMonth(paymentMonth)
-        : viewAsOfMonth;
+        : effectiveDate;
     return viewAsOfInstant(month);
-  }, [paymentMonth, viewAsOfMonth]);
+  }, [paymentMonth, effectiveDate]);
   const { data: categoryRates = [], isPending: categoriesLoading } = useQuery(
-    trpc.paymentCategories.forEmployee.queryOptions({ employeeId: props.employeeId, effectiveDate: paymentAt }),
+    trpc.paymentCategories.forEmployee.queryOptions({ employeeId: props.employeeId }),
   );
   const categoryGroups = groupCategoryRates(categoryRates ?? [], paymentAt);
   const categoryOptions = categoryGroups.map((group) => ({
@@ -396,7 +391,7 @@ function AddPayslipForm(props: { employeeId: number; onCreatePayslip: any }) {
               value={
                 field.input instanceof Date && !Number.isNaN(field.input.getTime())
                   ? startOfMonth(field.input)
-                  : viewAsOfMonth
+                  : effectiveDate
               }
               onChange={(month) => field.onChange(month)}
             />

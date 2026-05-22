@@ -76,17 +76,17 @@ Assignment requirements checklist (`[x]` done, `[ ]` not yet).
 ### 4. Payslip list with retroactive-change highlight
 
 - [x] List payslips with date and current total (per employee)
-- [ ] Detect retroactive change (rate edit after payslip creation changes applicable rate)
-- [ ] Visual highlight for affected payslips
-- [ ] Show original total and current total side by side
-- [ ] Persist original total at creation (needed for accurate "original" vs "current")
+- [x] Detect retroactive change (rate edit after payslip creation changes applicable rate)
+- [x] Visual highlight for affected payslips
+- [x] Show original total and current total side by side
+- [x] Persist original total at creation (needed for accurate "original" vs "current")
 
 ### 5. Dismiss a retroactive change
 
-- [ ] Detect which rate edits retroactively affect a payslip
-- [ ] Dismiss control on highlighted payslips
-- [ ] Dismiss most recent affecting edit first (LIFO)
-- [ ] Data model for dismissals (soft-delete, dismissal records, etc.)
+- [x] Detect which rate edits retroactively affect a payslip
+- [x] Dismiss control on highlighted payslips
+- [x] Dismiss most recent affecting edit first (LIFO)
+- [x] Data model for dismissals (soft-delete, dismissal records, etc.)
 
 ### Docs, tests, and polish
 
@@ -108,3 +108,4 @@ Assignment requirements checklist (`[x]` done, `[ ]` not yet).
 - To emit unnecessary front-end signaling, could potentially notify tRPC procedures about currently viewed date via cookies
 - For payslip creation, a separate view would be beneficial.
 - When a payslip is created for a specific month, it should instantly show the error when trying to create one for the month that already has a payslip.
+- There should be a properly complex sanitization of the search parameters, especially dates. The parse date is always intact, but for the demo purposes the current way is fine.

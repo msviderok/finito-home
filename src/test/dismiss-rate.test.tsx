@@ -10,14 +10,9 @@ describe('dismiss rate', () => {
     dismissRateMutation.mockReset();
   });
 
-  it('shows dismiss controls when multiple rates apply at the view-as-of date', () => {
-    renderWithProviders(
-      <InlineRateEditor
-        currentRate={overwrittenHourlyRates[1]}
-        history={overwrittenHourlyRates}
-        employeeId={1}
-        viewAsOfAt={new Date('2026-03-01T00:00:00')}
-      />,
+  it('shows dismiss controls when multiple rates apply at the view-as-of date', async () => {
+    await renderWithProviders(
+      <InlineRateEditor currentRate={overwrittenHourlyRates[1]} history={overwrittenHourlyRates} employeeId={1} />,
       { initialViewAsOfMonth: new Date('2026-03-01T00:00:00') },
     );
 
@@ -30,13 +25,8 @@ describe('dismiss rate', () => {
 
   it('dismisses latest rate change from the primary button', async () => {
     const [, overwriteRate] = overwrittenHourlyRates;
-    renderWithProviders(
-      <InlineRateEditor
-        currentRate={overwriteRate}
-        history={overwrittenHourlyRates}
-        employeeId={1}
-        viewAsOfAt={new Date('2026-03-01T00:00:00')}
-      />,
+    await renderWithProviders(
+      <InlineRateEditor currentRate={overwriteRate} history={overwrittenHourlyRates} employeeId={1} />,
       { initialViewAsOfMonth: new Date('2026-03-01T00:00:00') },
     );
 
@@ -51,13 +41,8 @@ describe('dismiss rate', () => {
 
   it('calls dismiss mutation after confirmation', async () => {
     const [, overwriteRate] = overwrittenHourlyRates;
-    renderWithProviders(
-      <InlineRateEditor
-        currentRate={overwriteRate}
-        history={overwrittenHourlyRates}
-        employeeId={1}
-        viewAsOfAt={new Date('2026-03-01T00:00:00')}
-      />,
+    await renderWithProviders(
+      <InlineRateEditor currentRate={overwriteRate} history={overwrittenHourlyRates} employeeId={1} />,
       { initialViewAsOfMonth: new Date('2026-03-01T00:00:00') },
     );
 

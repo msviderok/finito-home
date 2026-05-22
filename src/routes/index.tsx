@@ -4,6 +4,7 @@ import { PayslipsSection } from '@/components/PayslipsSection';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { PayslipCreateMutationInput } from '@/db/schema/payslips';
+import { appSearchSchema } from '@/lib/search';
 import { useTRPC, type RouterOutputs } from '@/lib/trpc/client';
 import { cn } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -11,13 +12,10 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { format } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect } from 'react';
-import * as v from 'valibot';
 
 const EMPLOYEE_PANEL_WIDTH = '28rem';
 
-const indexSearchSchema = v.object({
-  employee: v.optional(v.number()),
-});
+export const indexSearchSchema = appSearchSchema;
 
 export const Route = createFileRoute('/')({
   validateSearch: indexSearchSchema,
@@ -57,16 +55,32 @@ function EmployeesRoute() {
       !employeesLoading &&
       !employees.some((employee) => employee.id === selectedEmployeeId)
     ) {
-      void navigate({ search: (prev) => ({ ...prev, employee: undefined }), replace: true });
+      void navigate({
+        search: (prev) => ({
+          employee: undefined,
+          effectiveDate: prev.effectiveDate,
+        }),
+        replace: true,
+      });
     }
   }, [employees, employeesLoading, navigate, selectedEmployeeId]);
 
   const selectEmployee = (employeeId: number) => {
-    void navigate({ search: (prev) => ({ ...prev, employee: employeeId }) });
+    void navigate({
+      search: (prev) => ({
+        employee: employeeId,
+        effectiveDate: prev.effectiveDate,
+      }),
+    });
   };
 
   const closePanel = () => {
-    void navigate({ search: (prev) => ({ ...prev, employee: undefined }) });
+    void navigate({
+      search: (prev) => ({
+        employee: undefined,
+        effectiveDate: prev.effectiveDate,
+      }),
+    });
   };
 
   return (
