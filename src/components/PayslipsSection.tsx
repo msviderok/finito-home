@@ -28,7 +28,7 @@ import {
 } from '@/lib/category-rates';
 import { formatCents, formatCurrency } from '@/lib/currency';
 import { formatPayslipPaymentDate, viewAsOfInstant } from '@/lib/date';
-import { comparePayslipTotalsAt, getBaseRateForLineItem } from '@/lib/payslip-totals';
+import { comparePayslipTotalsAt, getLineBaseAmountCents, getLineBaseRateCents } from '@/lib/payslip-totals';
 import { useTRPC } from '@/lib/trpc/client';
 import { Field, FieldArray, Form, getInput, insert, remove, useForm } from '@formisch/react';
 import { useQuery } from '@tanstack/react-query';
@@ -266,6 +266,7 @@ function PayslipLineItemRow(props: {
     id: number;
     paymentCategoryId: number;
     units: string | number;
+    createAtAmountCents?: number | null;
     paymentCategory?: { name: string } | null;
   };
   categoryRates: CategoryRate[];
@@ -275,19 +276,19 @@ function PayslipLineItemRow(props: {
   totalsDiffer: boolean;
 }) {
   const units = Number(props.lineItem.units);
-  const baseRate = getBaseRateForLineItem(
+  const viewGroup = getCategoryGroupAt(props.viewGroups, props.lineItem.paymentCategoryId);
+  const baseAmountCents = getLineBaseAmountCents(
+    props.lineItem,
     props.categoryRates,
-    props.lineItem.paymentCategoryId,
     props.paymentDate,
     props.createdAt,
   );
-  const viewGroup = getCategoryGroupAt(props.viewGroups, props.lineItem.paymentCategoryId);
-  const baseAmountCents = baseRate && Number.isFinite(units) ? Math.round(baseRate.amountCents * units) : 0;
+  const baseRateCents = getLineBaseRateCents(props.lineItem, props.categoryRates, props.paymentDate, props.createdAt);
   const viewAmountCents =
     viewGroup && Number.isFinite(units) ? Math.round(viewGroup.currentRate.amountCents * units) : 0;
   const lineDiffers = props.totalsDiffer && baseAmountCents !== viewAmountCents;
   const rateDiffers =
-    props.totalsDiffer && baseRate && viewGroup && baseRate.amountCents !== viewGroup.currentRate.amountCents;
+    props.totalsDiffer && baseRateCents != null && viewGroup && baseRateCents !== viewGroup.currentRate.amountCents;
 
   return (
     <TableRow className={cn(smallTableRowClass, lineDiffers && 'bg-amber-500/5')}>
@@ -300,13 +301,13 @@ function PayslipLineItemRow(props: {
       <TableCell className={cn(smallTableCellClass, 'text-right')}>
         {rateDiffers ? (
           <PayslipAdjustedValue
-            paymentValue={formatCurrency(formatCents(baseRate!.amountCents))}
+            paymentValue={formatCurrency(formatCents(baseRateCents!))}
             viewValue={formatCurrency(viewGroup!.currentRate.amount)}
             suffix="/hr"
           />
         ) : (
           <span className="text-muted-foreground tabular-nums">
-            {baseRate ? `${formatCurrency(formatCents(baseRate.amountCents))}/hr` : '—'}
+            {baseRateCents != null ? `${formatCurrency(formatCents(baseRateCents))}/hr` : '—'}
           </span>
         )}
       </TableCell>

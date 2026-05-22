@@ -30,6 +30,20 @@ describe('comparePayslipTotalsAt', () => {
     expect(result.differs).toBe(true);
   });
 
+  it('uses stored createAtAmountCents as the submitted base total', () => {
+    const result = comparePayslipTotalsAt(
+      [{ paymentCategoryId: 1, units: 10, createAtAmountCents: 24_750 }],
+      rates,
+      paymentDate,
+      createdAt,
+      new Date('2026-06-30T23:59:59'),
+    );
+
+    expect(result.baseTotalCents).toBe(24_750);
+    expect(result.viewTotalCents).toBe(30_000);
+    expect(result.differs).toBe(true);
+  });
+
   it('reports equal totals when view-as-of matches the base slip', () => {
     const result = comparePayslipTotalsAt(lineItems, rates, paymentDate, createdAt, new Date('2026-02-28T23:59:59'));
 

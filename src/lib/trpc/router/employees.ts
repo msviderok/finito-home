@@ -93,6 +93,7 @@ export const employees = {
             paymentCategoryId: lineItem.paymentCategoryId,
             units: lineItem.hours.toFixed(2),
             paymentDate: input.paymentDate,
+            createAtAmountCents: Math.round(rate.amountCents * lineItem.hours),
             createdAt: now,
             createdById: ctx.user.id,
           });
