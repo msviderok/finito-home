@@ -6,13 +6,8 @@ import { protectedProcedure } from '../trpc';
 
 export const employees = {
   list: protectedProcedure.query(async ({ ctx }) => {
-    const employees = await ctx.db.query.employees.findMany({
-      orderBy: {
-        name: 'asc',
-      },
-    });
-
-    return employees.map((employee) => toEmployee(employee));
+    const employees = await ctx.db.query.employees.findMany({ orderBy: { name: 'asc' } });
+    return employees.map(toEmployee);
   }),
 
   get: protectedProcedure.input(v.object({ id: v.number() })).query(async ({ ctx, input }) => {

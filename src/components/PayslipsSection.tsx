@@ -9,7 +9,7 @@ import { formatCurrency } from '@/lib/currency';
 import { formatPayslipPaymentDate, viewAsOfInstant } from '@/lib/date';
 import { useTRPC } from '@/lib/trpc/client';
 import type { CreatePayslipHandler } from './EmployeePayrollAccordion';
-import { MonthPicker } from './MonthPicker';
+import { MonthPickerField } from '@/components/MonthPickerField';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { Button } from './ui/button';
 import { Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList } from './ui/combobox';
@@ -168,7 +168,7 @@ function AddPayslipForm(props: { employeeId: number; onCreatePayslip: CreatePays
         {(field) => (
           <label className="flex flex-col gap-1 self-start">
             <span className="text-muted-foreground">Payment month</span>
-            <MonthPicker
+            <MonthPickerField
               aria-label="Payment month"
               value={
                 field.input instanceof Date && !Number.isNaN(field.input.getTime())

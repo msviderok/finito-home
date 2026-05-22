@@ -12,7 +12,7 @@ function App() {
   const trpc = useTRPC();
   const { data = [] } = useQuery(trpc.employees.list.queryOptions());
   const createRate = useMutation(
-    trpc.paymentCategories.rates.create.mutationOptions({
+    trpc.rates.create.mutationOptions({
       onSuccess: () => {
         void queryClient.invalidateQueries(trpc.paymentCategories.forEmployee.queryFilter());
       },
