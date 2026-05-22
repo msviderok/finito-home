@@ -1,7 +1,7 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { startOfMonth } from 'date-fns';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { InlineRateEditor } from '@/components/InlineRateEditor';
+import { InlineRateEditor } from '@/components/PaymentCategoriesSection';
 import { createCategoryRate } from './fixtures';
 import { renderWithProviders } from './render';
 
@@ -20,7 +20,7 @@ describe('create rate', () => {
     );
 
     fireEvent.change(screen.getByLabelText(/^Rate$/i), { target: { value: '32.50' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Add rate' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Change rate' }));
 
     await waitFor(() => expect(onCreateRate).toHaveBeenCalledOnce());
     expect(onCreateRate).toHaveBeenCalledWith({
@@ -38,7 +38,7 @@ describe('create rate', () => {
     );
 
     fireEvent.change(screen.getByLabelText(/^Rate$/i), { target: { value: '' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Add rate' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Change rate' }));
 
     expect(onCreateRate).not.toHaveBeenCalled();
   });

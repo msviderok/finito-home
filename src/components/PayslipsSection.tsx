@@ -1,21 +1,27 @@
-import { useQuery } from '@tanstack/react-query';
-import { Field, FieldArray, Form, getInput, insert, remove, useForm } from '@formisch/react';
-import { startOfMonth } from 'date-fns';
-import { Plus, Trash2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { MonthPickerField } from '@/components/MonthPickerField';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Button } from '@/components/ui/button';
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from '@/components/ui/combobox';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
+import { useViewAsOf } from '@/components/ViewAsOfProvider';
 import { payslipDraftFormSchema, sanitizeHoursInput } from '@/db/schema/payslips';
 import { getCategoryGroupAt, groupCategoryRates } from '@/lib/category-rates';
 import { formatCurrency } from '@/lib/currency';
 import { formatPayslipPaymentDate, viewAsOfInstant } from '@/lib/date';
 import { useTRPC } from '@/lib/trpc/client';
-import type { CreatePayslipHandler } from './EmployeePayrollAccordion';
-import { MonthPickerField } from '@/components/MonthPickerField';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
-import { Button } from './ui/button';
-import { Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList } from './ui/combobox';
-import { Input } from './ui/input';
-import { Separator } from './ui/separator';
-import { useViewAsOf } from '@/contexts/ViewAsOfProvider';
+import { Field, FieldArray, Form, getInput, insert, remove, useForm } from '@formisch/react';
+import { useQuery } from '@tanstack/react-query';
+import { startOfMonth } from 'date-fns';
+import { Plus, Trash2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
 type CategoryOption = {
   value: number;
@@ -23,7 +29,7 @@ type CategoryOption = {
   rateAmount: number;
 };
 
-export function PayslipsSection(props: { employeeId: number; onCreatePayslip: CreatePayslipHandler }) {
+export function PayslipsSection(props: { employeeId: number; onCreatePayslip: any }) {
   const trpc = useTRPC();
   const [showForm, setShowForm] = useState(false);
   const { data: payslips = [] } = useQuery(trpc.employees.payslips.list.queryOptions({ employeeId: props.employeeId }));
@@ -46,7 +52,7 @@ export function PayslipsSection(props: { employeeId: number; onCreatePayslip: Cr
       {showForm && (
         <AddPayslipForm
           employeeId={props.employeeId}
-          onCreatePayslip={async (input) => {
+          onCreatePayslip={async (input: any) => {
             await props.onCreatePayslip(input);
             setShowForm(false);
           }}
@@ -118,7 +124,7 @@ export function PayslipAccordionItem(props: { payslipId: number; employeeId: num
   );
 }
 
-function AddPayslipForm(props: { employeeId: number; onCreatePayslip: CreatePayslipHandler }) {
+function AddPayslipForm(props: { employeeId: number; onCreatePayslip: any }) {
   const trpc = useTRPC();
   const { viewAsOfMonth } = useViewAsOf();
   const form = useForm({

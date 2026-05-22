@@ -1,7 +1,7 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { format, startOfMonth } from 'date-fns';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { InlineRateEditor } from '@/components/InlineRateEditor';
+import { InlineRateEditor } from '@/components/PaymentCategoriesSection';
 import { hourlyCategoryRates } from './fixtures';
 import { renderWithProviders } from './render';
 
@@ -27,7 +27,7 @@ describe('edit rate', () => {
     expect((screen.getByLabelText(/^Rate$/i) as HTMLInputElement).value).toBe('25.00');
 
     fireEvent.change(screen.getByLabelText(/^Rate$/i), { target: { value: '28.00' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Add rate' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Change rate' }));
 
     await waitFor(() => expect(onCreateRate).toHaveBeenCalledOnce());
     expect(onCreateRate).toHaveBeenCalledWith({
@@ -36,7 +36,8 @@ describe('edit rate', () => {
       paymentCategoryId: 1,
       effectiveFrom: startOfMonth(new Date('2026-03-01T00:00:00')),
     });
+    fireEvent.click(screen.getByRole('button', { name: 'Rate History' }));
     expect(screen.getByText(`Updated ${format(previousRate.createdAt, 'MMMM d, yyyy')}`)).toBeTruthy();
-    expect(screen.getByText(format(previousRate.effectiveFrom, 'MMM yyyy'))).toBeTruthy();
+    expect(screen.getByText(`Effective ${format(previousRate.effectiveFrom, 'MMM yyyy')}`)).toBeTruthy();
   });
 });

@@ -1,6 +1,6 @@
+import { Button } from '@/components/ui/button';
 import { Moon, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Button } from './ui/button';
 
 const themeStorageKey = 'finito-theme';
 type ThemePreference = 'light' | 'dark';
@@ -18,13 +18,21 @@ function applyTheme(preference: ThemePreference) {
 export function ThemeToggle() {
   const [isDark, setIsDark] = useState(false);
 
+  function applySystemTheme() {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const systemTheme = mediaQuery.matches ? 'dark' : 'light';
+    setIsDark(applyTheme(systemTheme));
+  }
+
+  function handleChange() {
+    if (!isThemePreference(localStorage.getItem(themeStorageKey))) {
+      applySystemTheme();
+    }
+  }
+
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const storedTheme = localStorage.getItem(themeStorageKey);
-    const applySystemTheme = () => {
-      const systemTheme = mediaQuery.matches ? 'dark' : 'light';
-      setIsDark(applyTheme(systemTheme));
-    };
 
     if (isThemePreference(storedTheme)) {
       setIsDark(applyTheme(storedTheme));
@@ -32,14 +40,7 @@ export function ThemeToggle() {
       applySystemTheme();
     }
 
-    const handleChange = () => {
-      if (!isThemePreference(localStorage.getItem(themeStorageKey))) {
-        applySystemTheme();
-      }
-    };
-
     mediaQuery.addEventListener('change', handleChange);
-
     return () => {
       mediaQuery.removeEventListener('change', handleChange);
     };

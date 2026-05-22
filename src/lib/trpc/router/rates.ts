@@ -3,6 +3,7 @@ import { formatCents } from '@/lib/currency';
 import type { TRPCRouterRecord } from '@trpc/server';
 import * as v from 'valibot';
 import { protectedProcedure } from '../trpc';
+import { eq } from 'drizzle-orm';
 
 export const rates = {
   history: protectedProcedure
@@ -42,5 +43,9 @@ export const rates = {
       .returning();
 
     return { id: rate.id };
+  }),
+
+  dismiss: protectedProcedure.input(v.object({ rateId: v.number() })).mutation(async ({ ctx, input }) => {
+    await ctx.db.delete(ratesTable).where(eq(ratesTable.id, input.rateId));
   }),
 } satisfies TRPCRouterRecord;

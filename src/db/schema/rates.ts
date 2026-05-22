@@ -1,8 +1,7 @@
 import { integer, sqliteTable } from 'drizzle-orm/sqlite-core';
 import { createInsertSchema, createSelectSchema, createUpdateSchema } from 'drizzle-valibot';
-import { startOfMonth } from 'date-fns';
 import * as v from 'valibot';
-import { isValidRateAmountInput, parseRateAmountInput } from '@/lib/currency';
+import { isValidRateAmountInput } from '@/lib/currency';
 import { employeesTable } from './employees';
 import { paymentCategoriesTable } from './paymentCategories';
 
@@ -43,18 +42,6 @@ export const rateCreateFormFieldsSchema = v.omit(
   }),
   ['id', 'createdAt', 'effectiveFrom'],
 );
-
-export function parseRateCreateMutation(
-  input: v.InferOutput<typeof rateCreateFormFieldsSchema>,
-  effectiveFromMonth: Date,
-): v.InferOutput<typeof rateCreateMutationSchema> {
-  return v.parse(rateCreateMutationSchema, {
-    amount: parseRateAmountInput(input.amountCents),
-    employeeId: input.employeeId,
-    paymentCategoryId: input.paymentCategoryId,
-    effectiveFrom: startOfMonth(effectiveFromMonth),
-  });
-}
 
 export const rateSelectSchema = createSelectSchema(ratesTable);
 export const rateUpdateSchema = createUpdateSchema(ratesTable);

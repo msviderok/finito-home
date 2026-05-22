@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, type RenderOptions } from '@testing-library/react';
 import type { ReactElement } from 'react';
-import { ViewAsOfProvider } from '@/contexts/ViewAsOfProvider';
+import { ViewAsOfProvider } from '@/components/ViewAsOfProvider';
 import type { CategoryRate } from '@/lib/category-rates';
 import { trpc } from '@/router';
 
