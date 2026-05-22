@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { format } from 'date-fns';
-import { PanelRightCloseIcon, PanelRightOpenIcon, XIcon } from 'lucide-react';
+import { ChevronRight, XIcon } from 'lucide-react';
 import { useState } from 'react';
 
 const EMPLOYEE_PANEL_WIDTH = '28rem';
@@ -27,7 +27,6 @@ function EmployeesRoute() {
   const trpc = useTRPC();
   const { data: employees = [], isPending: employeesLoading } = useQuery(trpc.employees.list.queryOptions());
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(null);
-  const [panelOpen, setPanelOpen] = useState(false);
   const selectedEmployee = employees.find((employee) => employee.id === selectedEmployeeId) ?? null;
   const createRate = useMutation(
     trpc.rates.create.mutationOptions({
@@ -45,28 +44,21 @@ function EmployeesRoute() {
     }),
   );
 
-  const closePanel = () => {
-    setPanelOpen(false);
-    setSelectedEmployeeId(null);
-  };
+  const closePanel = () => setSelectedEmployeeId(null);
 
   return (
     <div
       className="flex min-h-0 flex-1 flex-col gap-6 lg:flex-row lg:items-stretch"
       style={{ '--employee-panel-width': EMPLOYEE_PANEL_WIDTH } as React.CSSProperties}
     >
-      <section className="flex min-w-0 flex-1 flex-col gap-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-xs font-semibold tracking-tight">Employees</h1>
-            <p className="text-xs/relaxed text-muted-foreground">Select an employee to manage payroll settings.</p>
-          </div>
-          {selectedEmployee && !panelOpen && (
-            <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={() => setPanelOpen(true)}>
-              <PanelRightOpenIcon />
-              <span className="max-w-40 truncate">{selectedEmployee.name}</span>
-            </Button>
-          )}
+      <section className={cn('flex min-w-0 flex-1 flex-col gap-4 transition-[padding]', selectedEmployee && 'lg:pr-0')}>
+        <div>
+          <h1 className="text-xs font-semibold tracking-tight">Employees</h1>
+          <p className="text-xs/relaxed text-muted-foreground">
+            {selectedEmployee
+              ? `Viewing payroll for ${selectedEmployee.name}. Select another row to switch.`
+              : 'Select an employee to manage payroll settings.'}
+          </p>
         </div>
 
         {employeesLoading ? (
@@ -75,14 +67,11 @@ function EmployeesRoute() {
           <EmployeesTable
             employees={employees}
             selectedEmployeeId={selectedEmployeeId}
-            onSelect={(employeeId) => {
-              setSelectedEmployeeId(employeeId);
-              setPanelOpen(true);
-            }}
+            onSelect={setSelectedEmployeeId}
           />
         )}
 
-        {panelOpen && selectedEmployee && (
+        {selectedEmployee && (
           <EmployeeSettingsPanelContent
             className="lg:hidden"
             employee={selectedEmployee}
@@ -95,16 +84,16 @@ function EmployeesRoute() {
         )}
       </section>
 
-      <EmployeeSettingsPanel
-        employee={selectedEmployee}
-        open={panelOpen && selectedEmployee !== null}
-        onOpenChange={setPanelOpen}
-        onClose={closePanel}
-        onCreateRate={createRate.mutate}
-        onCreatePayslip={async (input) => {
-          await createPayslip.mutateAsync(input);
-        }}
-      />
+      {selectedEmployee && (
+        <EmployeeSettingsPanel
+          employee={selectedEmployee}
+          onClose={closePanel}
+          onCreateRate={createRate.mutate}
+          onCreatePayslip={async (input) => {
+            await createPayslip.mutateAsync(input);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -115,10 +104,16 @@ function EmployeesTable(props: {
   onSelect: (employeeId: number) => void;
 }) {
   return (
-    <div className="overflow-hidden rounded-lg border bg-card">
+    <div
+      className={cn(
+        'overflow-hidden rounded-lg border bg-card transition-shadow',
+        props.selectedEmployeeId !== null && 'ring-1 ring-primary/20',
+      )}
+    >
       <Table>
         <TableHeader>
           <TableRow className="border-b-0 hover:bg-transparent">
+            <TableHead className="h-8 w-8 bg-muted/40 px-2" />
             <TableHead className="h-8 bg-muted/40 px-3 text-xs text-muted-foreground">Name</TableHead>
             <TableHead className="h-8 bg-muted/40 px-3 text-xs text-muted-foreground">Birthday</TableHead>
             <TableHead className="h-8 bg-muted/40 px-3 text-right text-xs text-muted-foreground">Age</TableHead>
@@ -127,26 +122,52 @@ function EmployeesTable(props: {
         <TableBody>
           {props.employees.length === 0 && (
             <TableRow className="hover:bg-transparent">
-              <TableCell colSpan={3} className="px-3 py-8 text-center text-muted-foreground">
+              <TableCell colSpan={4} className="px-3 py-8 text-center text-muted-foreground">
                 No employees found.
               </TableCell>
             </TableRow>
           )}
-          {props.employees.map((employee) => (
-            <TableRow
-              key={employee.id}
-              aria-selected={props.selectedEmployeeId === employee.id}
-              data-state={props.selectedEmployeeId === employee.id ? 'selected' : undefined}
-              className="cursor-pointer border-x-0 hover:bg-muted/40 data-[state=selected]:bg-primary/5 data-[state=selected]:hover:bg-primary/10"
-              onClick={() => props.onSelect(employee.id)}
-            >
-              <TableCell className="px-3 font-medium text-foreground">{employee.name}</TableCell>
-              <TableCell className="px-3 text-muted-foreground tabular-nums">
-                {format(employee.birthday, 'MMM d, yyyy')}
-              </TableCell>
-              <TableCell className="px-3 text-right text-muted-foreground tabular-nums">{employee.age} years</TableCell>
-            </TableRow>
-          ))}
+          {props.employees.map((employee) => {
+            const isSelected = props.selectedEmployeeId === employee.id;
+            return (
+              <TableRow
+                key={employee.id}
+                aria-selected={isSelected}
+                aria-current={isSelected ? 'true' : undefined}
+                data-state={isSelected ? 'selected' : undefined}
+                className={cn(
+                  'cursor-pointer border-x-0 transition-colors hover:bg-muted/40',
+                  isSelected &&
+                    'border-l-2 border-l-primary bg-primary/10 shadow-[inset_3px_0_0_0_var(--color-primary)] hover:bg-primary/15',
+                )}
+                onClick={() => props.onSelect(employee.id)}
+              >
+                <TableCell className="w-8 px-2">
+                  {isSelected ? (
+                    <ChevronRight className="size-3.5 text-primary" aria-hidden />
+                  ) : (
+                    <span className="inline-block size-3.5" aria-hidden />
+                  )}
+                </TableCell>
+                <TableCell className="px-3">
+                  <span className={cn('font-medium', isSelected ? 'text-primary' : 'text-foreground')}>
+                    {employee.name}
+                  </span>
+                  {isSelected && (
+                    <span className="mt-0.5 block text-[0.625rem] font-medium tracking-wide text-primary uppercase">
+                      Active in panel
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell className="px-3 text-muted-foreground tabular-nums">
+                  {format(employee.birthday, 'MMM d, yyyy')}
+                </TableCell>
+                <TableCell className="px-3 text-right text-muted-foreground tabular-nums">
+                  {employee.age} years
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>
@@ -154,55 +175,20 @@ function EmployeesTable(props: {
 }
 
 function EmployeeSettingsPanel(props: {
-  employee: Employee | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  employee: Employee;
   onClose: () => void;
   onCreateRate: any;
   onCreatePayslip: CreatePayslipHandler;
 }) {
-  const showPanel = props.open && props.employee;
-
   return (
-    <div className="relative hidden shrink-0 lg:block">
-      <button
-        type="button"
-        aria-label={showPanel ? 'Collapse employee panel' : 'Expand employee panel'}
-        title={showPanel ? 'Collapse employee panel' : 'Expand employee panel'}
-        disabled={!props.employee}
-        onClick={() => props.onOpenChange(!props.open)}
-        className={cn(
-          'absolute top-6 -left-3 z-10 flex size-6 items-center justify-center rounded-md border bg-background text-muted-foreground shadow-sm transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-0',
-        )}
-      >
-        {showPanel ? <PanelRightCloseIcon className="size-3.5" /> : <PanelRightOpenIcon className="size-3.5" />}
-      </button>
-
-      <div
-        data-state={showPanel ? 'open' : 'closed'}
-        className={cn(
-          'overflow-hidden transition-[width] duration-200 ease-linear',
-          showPanel ? 'w-(--employee-panel-width)' : 'w-0',
-        )}
-      >
-        <aside
-          aria-hidden={!showPanel}
-          className={cn(
-            'flex h-full min-h-0 w-(--employee-panel-width) flex-col overflow-hidden border-l bg-background',
-            !showPanel && 'pointer-events-none opacity-0',
-          )}
-        >
-          {props.employee && showPanel && (
-            <EmployeeSettingsPanelContent
-              employee={props.employee}
-              onClose={props.onClose}
-              onCreateRate={props.onCreateRate}
-              onCreatePayslip={props.onCreatePayslip}
-            />
-          )}
-        </aside>
-      </div>
-    </div>
+    <aside className="hidden w-(--employee-panel-width) shrink-0 flex-col overflow-hidden border-l border-primary/20 bg-primary/[0.02] lg:flex">
+      <EmployeeSettingsPanelContent
+        employee={props.employee}
+        onClose={props.onClose}
+        onCreateRate={props.onCreateRate}
+        onCreatePayslip={props.onCreatePayslip}
+      />
+    </aside>
   );
 }
 
@@ -214,9 +200,10 @@ function EmployeeSettingsPanelContent(props: {
   onCreatePayslip: CreatePayslipHandler;
 }) {
   return (
-    <div className={cn('flex min-h-0 flex-col overflow-hidden rounded-lg border bg-background', props.className)}>
-      <div className="flex shrink-0 items-start gap-2 border-b px-4 py-3">
+    <div className={cn('flex min-h-0 flex-col overflow-hidden bg-background', props.className)}>
+      <div className="flex shrink-0 items-start gap-2 border-b border-primary/15 bg-primary/5 px-4 py-3">
         <div className="min-w-0 flex-1">
+          <p className="text-[0.625rem] font-medium tracking-wide text-primary uppercase">Payroll details</p>
           <h2 className="truncate text-xs font-semibold">{props.employee.name}</h2>
           <p className="text-xs/relaxed text-muted-foreground">
             {format(props.employee.birthday, 'MMM d, yyyy')} · {props.employee.age} years
@@ -241,7 +228,7 @@ function EmployeeDetails(props: { employee: Employee }) {
   return (
     <section>
       <h3 className="mb-3 text-xs font-medium text-muted-foreground">Profile</h3>
-      <dl className="grid gap-3 sm:grid-cols-3">
+      <dl className="grid gap-x-4 gap-y-2 sm:grid-cols-3">
         <Detail label="Full name" value={props.employee.name} />
         <Detail label="Birthday" value={format(props.employee.birthday, 'MMM d, yyyy')} />
         <Detail label="Age" value={`${props.employee.age} years`} />
@@ -252,9 +239,9 @@ function EmployeeDetails(props: { employee: Employee }) {
 
 function Detail(props: { label: string; value: string }) {
   return (
-    <div className="rounded-md border bg-muted/20 px-3 py-2.5">
+    <div className="min-w-0">
       <dt className="text-xs text-muted-foreground">{props.label}</dt>
-      <dd className="mt-1 text-xs font-medium tabular-nums">{props.value}</dd>
+      <dd className="text-xs font-medium tabular-nums">{props.value}</dd>
     </div>
   );
 }

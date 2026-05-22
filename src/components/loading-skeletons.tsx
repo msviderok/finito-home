@@ -44,9 +44,9 @@ export function EmployeeProfileSkeleton() {
       <Skeleton className="mb-3 h-3 w-12" />
       <dl className="grid gap-3 sm:grid-cols-3">
         {Array.from({ length: 3 }, (_, index) => (
-          <div key={index} className="rounded-md border bg-muted/20 px-3 py-2.5">
+          <div key={index} className="min-w-0">
             <Skeleton className="h-2.5 w-14" />
-            <Skeleton className="mt-2 h-3.5 w-24" />
+            <Skeleton className="mt-1 h-3.5 w-24" />
           </div>
         ))}
       </dl>
@@ -58,9 +58,9 @@ export function PaymentCategoriesSkeleton() {
   return (
     <section className="flex flex-col gap-2">
       <Skeleton className="h-3.5 w-32" />
-      <div className="flex flex-col gap-3">
+      <div className="divide-y divide-border">
         {Array.from({ length: 2 }, (_, index) => (
-          <div key={index} className="flex flex-col gap-3 rounded-md border p-3">
+          <div key={index} className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0">
             <div className="flex flex-wrap items-center gap-2">
               <Skeleton className="h-3.5 w-36" />
               <Skeleton className="ml-auto h-3.5 w-20" />
@@ -84,7 +84,7 @@ export function PayslipsSectionSkeleton() {
         <Skeleton className="h-3.5 w-16" />
         <Skeleton className="h-6 w-24" />
       </div>
-      <div className="flex flex-col gap-3">
+      <div className="divide-y divide-border">
         {Array.from({ length: 2 }, (_, index) => (
           <PayslipPanelSkeleton key={index} />
         ))}
@@ -95,27 +95,9 @@ export function PayslipsSectionSkeleton() {
 
 export function PayslipPanelSkeleton() {
   return (
-    <article className="flex flex-col gap-3 rounded-md border p-3">
-      <div className="flex items-center gap-3">
-        <Skeleton className="h-3.5 w-24" />
-        <Skeleton className="ml-auto h-3.5 w-16" />
-      </div>
-      <div className="flex flex-col gap-2">
-        {Array.from({ length: 2 }, (_, index) => (
-          <div key={index} className="grid gap-2 rounded-md border px-2 py-1.5 sm:grid-cols-[1fr_auto_auto_auto]">
-            <Skeleton className="h-3.5 w-28" />
-            <Skeleton className="h-3.5 w-14" />
-            <Skeleton className="h-3.5 w-12" />
-            <Skeleton className="h-3.5 w-14 justify-self-end" />
-          </div>
-        ))}
-        <Skeleton className="h-px w-full" />
-        <div className="flex justify-end gap-3">
-          <Skeleton className="h-3.5 w-10" />
-          <Skeleton className="h-3.5 w-16" />
-        </div>
-      </div>
-    </article>
+    <div className="py-4 first:pt-0 last:pb-0">
+      <Skeleton className="h-8 w-full" />
+    </div>
   );
 }
 

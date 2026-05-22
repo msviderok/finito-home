@@ -21,7 +21,9 @@ import { useTRPC } from '@/lib/trpc/client';
 import { Field, FieldArray, Form, getInput, insert, remove, useForm } from '@formisch/react';
 import { useQuery } from '@tanstack/react-query';
 import { startOfMonth } from 'date-fns';
-import { Plus, Trash2 } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { cn } from '@/lib/utils';
+import { ChevronDown, Plus, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 type CategoryOption = {
@@ -67,9 +69,9 @@ export function PayslipsSection(props: { employeeId: number; onCreatePayslip: an
       )}
 
       {payslips.length === 0 ? (
-        <p className="rounded-md border border-dashed p-3 text-muted-foreground">No pay slips yet.</p>
+        <p className="py-2 text-xs text-muted-foreground">No pay slips yet.</p>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="divide-y divide-border">
           {payslips.map((payslip) => (
             <PayslipPanel key={payslip.id} payslipId={payslip.id} employeeId={props.employeeId} />
           ))}
@@ -100,36 +102,51 @@ export function PayslipPanel(props: { payslipId: number; employeeId: number }) {
   }, 0);
 
   return (
-    <article className="flex flex-col gap-3 rounded-md border p-3">
-      <div className="flex items-center gap-3">
-        <span className="text-xs font-medium tabular-nums">{formatPayslipPaymentDate(payslip.paymentDate)}</span>
-        <span className="ml-auto text-xs font-medium text-muted-foreground tabular-nums">{formatCurrency(total)}</span>
-      </div>
-      <div className="flex flex-col gap-2">
-        {payslip.lineItems.map((lineItem) => {
-          const group = getCategoryGroupAt(categoryGroups, lineItem.paymentCategoryId);
-          const lineTotal = group ? group.currentRate.amount * Number(lineItem.units) : 0;
-          return (
-            <div
-              key={lineItem.id}
-              className="grid gap-2 rounded-md border px-2 py-1.5 sm:grid-cols-[1fr_auto_auto_auto]"
+    <Collapsible className="py-4 first:pt-0 last:pb-0">
+      <div className="flex items-center gap-2">
+        <CollapsibleTrigger
+          render={(triggerProps, state) => (
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-auto flex-1 justify-start gap-2 px-2 py-1.5"
+              {...triggerProps}
             >
-              <span className="text-xs font-medium">{lineItem.paymentCategory?.name ?? 'Payment category'}</span>
-              <span className="text-muted-foreground tabular-nums">{Number(lineItem.units).toFixed(2)} hours</span>
-              <span className="text-muted-foreground tabular-nums">
-                {group ? `${formatCurrency(group.currentRate.amount)}/hr` : '—'}
+              <ChevronDown
+                className={cn('size-3.5 shrink-0 transition-transform duration-150', { 'rotate-180': state.open })}
+              />
+              <span className="text-xs font-medium tabular-nums">{formatPayslipPaymentDate(payslip.paymentDate)}</span>
+              <span className="ml-auto text-xs font-medium text-muted-foreground tabular-nums">
+                {formatCurrency(total)}
               </span>
-              <span className="text-xs font-medium tabular-nums">{formatCurrency(lineTotal)}</span>
-            </div>
-          );
-        })}
-        <Separator />
-        <div className="flex justify-end gap-3 text-xs font-semibold">
-          <span>Total</span>
-          <span className="tabular-nums">{formatCurrency(total)}</span>
-        </div>
+            </Button>
+          )}
+        />
       </div>
-    </article>
+      <CollapsibleContent className="pt-2">
+        <div className="flex flex-col divide-y divide-border/60">
+          {payslip.lineItems.map((lineItem) => {
+            const group = getCategoryGroupAt(categoryGroups, lineItem.paymentCategoryId);
+            const lineTotal = group ? group.currentRate.amount * Number(lineItem.units) : 0;
+            return (
+              <div key={lineItem.id} className="grid gap-x-3 gap-y-1 py-1.5 text-xs sm:grid-cols-[1fr_auto_auto_auto]">
+                <span className="font-medium">{lineItem.paymentCategory?.name ?? 'Payment category'}</span>
+                <span className="text-muted-foreground tabular-nums">{Number(lineItem.units).toFixed(2)} hours</span>
+                <span className="text-muted-foreground tabular-nums">
+                  {group ? `${formatCurrency(group.currentRate.amount)}/hr` : '—'}
+                </span>
+                <span className="font-medium tabular-nums">{formatCurrency(lineTotal)}</span>
+              </div>
+            );
+          })}
+          <Separator />
+          <div className="flex justify-end gap-3 py-1.5 text-xs font-semibold">
+            <span>Total</span>
+            <span className="tabular-nums">{formatCurrency(total)}</span>
+          </div>
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
@@ -174,7 +191,7 @@ function AddPayslipForm(props: { employeeId: number; onCreatePayslip: any }) {
           paymentDate: viewAsOfInstant(startOfMonth(output.paymentDate)),
         });
       }}
-      className="flex flex-col gap-3 rounded-md border p-3"
+      className="flex flex-col gap-3 border-t border-border pt-4"
     >
       <Field of={form} path={['employeeId']}>
         {(field) => <input {...field.props} type="hidden" value={String(field.input ?? '')} />}
@@ -327,7 +344,7 @@ function DraftLineItemRow(props: {
       {(categoryField) => {
         const category = props.categoryOptions.find((option) => option.value === categoryField.input);
         return (
-          <div className="grid items-end gap-2 rounded-md border px-2 py-2 sm:grid-cols-[1fr_auto_8rem_auto_auto]">
+          <div className="grid items-end gap-x-3 gap-y-2 py-2 sm:grid-cols-[1fr_auto_8rem_auto_auto]">
             <input {...categoryField.props} type="hidden" value={String(categoryField.input ?? '')} />
             <div className="flex flex-col gap-0.5">
               <span className="text-xs font-medium">{category?.label ?? 'Payment category'}</span>

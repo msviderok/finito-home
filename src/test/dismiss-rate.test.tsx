@@ -22,7 +22,7 @@ describe('dismiss rate', () => {
       { initialViewAsOfMonth: new Date('2026-03-01T00:00:00') },
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Rate history' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Previous rates' }));
 
     expect(screen.getAllByRole('button', { name: /Dismiss \$/ })).toHaveLength(2);
   });
@@ -39,7 +39,7 @@ describe('dismiss rate', () => {
       { initialViewAsOfMonth: new Date('2026-03-01T00:00:00') },
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Rate history' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Previous rates' }));
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss $28.00 rate' }));
     fireEvent.click(screen.getByRole('button', { name: 'Confirm dismiss' }));
 

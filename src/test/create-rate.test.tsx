@@ -25,8 +25,9 @@ describe('create rate', () => {
       { initialViewAsOfMonth: new Date('2026-06-01T00:00:00') },
     );
 
+    fireEvent.click(screen.getByRole('button', { name: 'Edit rate' }));
     fireEvent.change(screen.getByLabelText(/^Rate$/i), { target: { value: '32.50' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Change rate' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save rate' }));
 
     await waitFor(() => expect(onCreateRate).toHaveBeenCalledOnce());
     expect(onCreateRate).toHaveBeenCalledWith({
@@ -49,8 +50,9 @@ describe('create rate', () => {
       />,
     );
 
+    fireEvent.click(screen.getByRole('button', { name: 'Edit rate' }));
     fireEvent.change(screen.getByLabelText(/^Rate$/i), { target: { value: '' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Change rate' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save rate' }));
 
     expect(onCreateRate).not.toHaveBeenCalled();
   });
