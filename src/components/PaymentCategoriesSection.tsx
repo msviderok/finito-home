@@ -3,7 +3,12 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Input } from '@/components/ui/input';
 import { useEffectiveDate } from '@/lib/hooks/useEffectiveDate';
 import type { SelectPaymentCategory } from '@/db/schema/paymentCategories';
-import { rateCreateMutationSchema, type RateCreateFormOutput, type SelectRate } from '@/db/schema/rates';
+import {
+  rateAmountSchema,
+  rateCreateMutationSchema,
+  type RateCreateFormOutput,
+  type SelectRate,
+} from '@/db/schema/rates';
 import {
   getLatestRateChange,
   groupCategoryRates,
@@ -20,9 +25,10 @@ import {
 import { useTRPC } from '@/lib/trpc/client';
 import { cn } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Field, Form, reset, setErrors, useForm } from '@formisch/react';
 import { format, startOfMonth } from 'date-fns';
-import { ArrowRight, Check, ChevronDown, Edit2, XIcon } from 'lucide-react';
-import { useEffect, useState, type ReactNode } from 'react';
+import { AlertTriangleIcon, Check, ChevronDown, Edit2, Loader2Icon, XIcon } from 'lucide-react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import * as v from 'valibot';
 import { PaymentCategoriesSkeleton } from '@/components/loading-skeletons';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +40,7 @@ import {
 } from '@/components/ui/compact-table';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverContent } from './ui/popover';
 
 export function PaymentCategoriesSection(props: { employeeId: number; onCreateRate: CreateRateHandler }) {
   const trpc = useTRPC();
@@ -90,6 +97,10 @@ export type InlineRateEditorRate = SelectRate & {
 
 export type CreateRateHandler = (input: RateCreateFormOutput) => Promise<void> | void;
 
+const inlineRateFormSchema = v.object({
+  amount: rateAmountSchema,
+});
+
 export function InlineRateEditor(props: {
   currentRate: InlineRateEditorRate;
   history: InlineRateEditorRate[];
@@ -98,11 +109,19 @@ export function InlineRateEditor(props: {
 }) {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [draftAmount, setDraftAmount] = useState(() => formatRateAmount(props.currentRate.amountCents / 100));
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   const { effectiveDate } = useEffectiveDate();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const form = useForm({
+    schema: inlineRateFormSchema,
+    initialInput: {
+      amount: formatRateAmount(props.currentRate.amountCents / 100),
+    },
+    validate: 'submit',
+    revalidate: 'input',
+  });
   const dismissRate = useMutation(
     trpc.rates.dismiss.mutationOptions({
       onSuccess: () => {
@@ -115,31 +134,50 @@ export function InlineRateEditor(props: {
   const hasConflictingRates = hasConflictingRatesAt(props.history, effectiveDate);
   const latestRateChange = getLatestRateChange(props.history, effectiveDate);
   const effectiveMonthLabel = format(startOfMonth(effectiveDate), 'MMM yyyy');
+  const formId = `rate-form-${props.currentRate.id}`;
 
   useEffect(() => {
-    setDraftAmount(formatRateAmount(props.currentRate.amountCents / 100));
+    reset(form, {
+      initialInput: {
+        amount: formatRateAmount(props.currentRate.amountCents / 100),
+      },
+    });
     setEditing(false);
-    setSubmitError(null);
-  }, [props.currentRate.id, props.currentRate.amountCents]);
+    setConfirmOpen(false);
+  }, [form, props.currentRate.id, props.currentRate.amountCents]);
 
-  const parsedDraftAmount = parseRateAmountInput(draftAmount);
-  const canSave = editing && isValidRateAmountInput(draftAmount) && parsedDraftAmount !== props.currentRate.amount;
-  const hasPendingChange = canSave;
+  const discardRate = () => {
+    reset(form);
+    setEditing(false);
+    setConfirmOpen(false);
+  };
 
-  const saveRate = () => {
-    if (!canSave) return;
-    setSubmitError(null);
+  const submitRate = async (output: v.InferOutput<typeof inlineRateFormSchema>) => {
+    if (!confirmOpen) {
+      setConfirmOpen(true);
+      return;
+    }
+
     try {
-      const parsed = v.parse(rateCreateMutationSchema, {
-        amount: parseRateAmountInput(draftAmount),
-        employeeId: props.employeeId,
-        paymentCategoryId: props.currentRate.paymentCategoryId,
-        effectiveFrom: startOfMonth(effectiveDate),
+      await props.onCreateRate?.(
+        v.parse(rateCreateMutationSchema, {
+          amount: parseRateAmountInput(output.amount),
+          employeeId: props.employeeId,
+          paymentCategoryId: props.currentRate.paymentCategoryId,
+          effectiveFrom: startOfMonth(effectiveDate),
+        }),
+      );
+      reset(form, {
+        initialInput: {
+          amount: output.amount,
+        },
       });
-      void props.onCreateRate?.(parsed);
       setEditing(false);
+      setConfirmOpen(false);
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : 'Invalid rate amount');
+      setErrors(form, {
+        errors: [error instanceof Error ? error.message : 'Unable to update rate'],
+      });
     }
   };
 
@@ -155,9 +193,13 @@ export function InlineRateEditor(props: {
               size="icon-xs"
               aria-label="Edit rate"
               onClick={() => {
-                setDraftAmount(formatRateAmount(props.currentRate.amountCents / 100));
+                reset(form, {
+                  initialInput: {
+                    amount: formatRateAmount(props.currentRate.amountCents / 100),
+                  },
+                });
                 setEditing(true);
-                setSubmitError(null);
+                setConfirmOpen(false);
               }}
             >
               <Edit2 />
@@ -178,48 +220,97 @@ export function InlineRateEditor(props: {
             )}
           </>
         ) : (
-          <>
-            <label className="sr-only" htmlFor={`rate-${props.currentRate.id}`}>
-              Rate
-            </label>
-            <Input
-              id={`rate-${props.currentRate.id}`}
-              type="text"
-              inputMode="decimal"
-              value={draftAmount}
-              onChange={(event) => setDraftAmount(sanitizeRateAmountInput(event.target.value))}
-              className="h-7 w-28"
-              autoFocus
-            />
-            <Button type="button" size="icon-sm" aria-label="Save rate" disabled={!canSave} onClick={saveRate}>
-              <Check />
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label="Cancel editing rate"
-              onClick={() => {
-                setDraftAmount(formatRateAmount(props.currentRate.amountCents / 100));
-                setEditing(false);
-                setSubmitError(null);
+          <Form id={formId} of={form} onSubmit={submitRate} className="flex flex-wrap items-center justify-end gap-2">
+            <Field of={form} path={['amount']}>
+              {(field) => {
+                const draftAmount = field.input ?? '';
+                const parsedDraftAmount = parseRateAmountInput(draftAmount);
+                const canSave =
+                  editing && isValidRateAmountInput(draftAmount) && parsedDraftAmount !== props.currentRate.amount;
+
+                return (
+                  <>
+                    <Popover open={confirmOpen} onOpenChange={setConfirmOpen}>
+                      <label className="sr-only" htmlFor={`rate-${props.currentRate.id}`}>
+                        Rate
+                      </label>
+
+                      <Input
+                        {...field.props}
+                        ref={inputRef}
+                        id={`rate-${props.currentRate.id}`}
+                        type="text"
+                        inputMode="decimal"
+                        value={draftAmount}
+                        onChange={(event) => field.onChange(sanitizeRateAmountInput(event.target.value))}
+                        className="h-5 w-20"
+                        autoFocus
+                      />
+                      <PopoverContent anchor={inputRef} side="top">
+                        <div className="flex items-center gap-2 text-warning">
+                          <AlertTriangleIcon className="size-4" />
+                          <span>Rate will be replaced with this new amount.</span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="tabular-nums line-through opacity-70">
+                            {formatCurrency(props.currentRate.amount)}
+                          </span>
+                          <span className="font-semibold tabular-nums">{formatCurrency(parsedDraftAmount)}</span>
+                        </div>
+                        {field.errors && <p className="text-xs text-destructive">{field.errors[0]}</p>}
+                        {form.errors && <p className="text-xs text-destructive">{form.errors[0]}</p>}
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <Button
+                            type="submit"
+                            form={formId}
+                            size="xs"
+                            variant="default"
+                            disabled={!canSave || form.isSubmitting}
+                            aria-label="Confirm new rate"
+                          >
+                            {form.isSubmitting && <Loader2Icon className="size-3 animate-spin" />}
+                            Confirm
+                          </Button>
+                          <Button
+                            type="button"
+                            size="xs"
+                            variant="destructive"
+                            disabled={form.isSubmitting}
+                            onClick={discardRate}
+                            aria-label="Discard changes"
+                            className="ml-2"
+                          >
+                            Discard
+                          </Button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+
+                    <Button
+                      type="submit"
+                      size="icon-xs"
+                      aria-label="Save rate"
+                      disabled={!canSave || form.isSubmitting}
+                    >
+                      <Check />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-xs"
+                      aria-label="Cancel editing rate"
+                      disabled={form.isSubmitting}
+                      onClick={discardRate}
+                    >
+                      <XIcon />
+                    </Button>
+                  </>
+                );
               }}
-            >
-              <XIcon />
-            </Button>
-          </>
+            </Field>
+          </Form>
         )}
       </div>
-
-      {hasPendingChange && (
-        <div className="flex flex-wrap items-center gap-1.5 rounded-md bg-amber-500/10 px-2 py-1.5 text-xs text-amber-950 dark:text-amber-100">
-          <span className="tabular-nums line-through opacity-70">{formatCurrency(props.currentRate.amount)}</span>
-          <ArrowRight className="size-3 shrink-0 opacity-70" />
-          <span className="font-semibold tabular-nums">{formatCurrency(parsedDraftAmount)}</span>
-          <span className="text-muted-foreground">· overrides rate effective {effectiveMonthLabel}</span>
-        </div>
-      )}
-      {submitError && <p className="text-xs text-destructive">{submitError}</p>}
 
       {props.history.length > 1 && (
         <Collapsible open={historyOpen} onOpenChange={setHistoryOpen}>
