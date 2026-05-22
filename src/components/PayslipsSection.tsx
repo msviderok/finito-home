@@ -80,7 +80,7 @@ export function PayslipsSection(props: { employeeId: number; onCreatePayslip: an
       )}
 
       {payslips.length === 0 ? (
-        <p className="py-2 text-xs text-muted-foreground">No pay slips yet.</p>
+        <div className="rounded-md border px-2 py-6 text-center text-xs text-muted-foreground">No payslips yet</div>
       ) : (
         <SmallTable>
           <Table>

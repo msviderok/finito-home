@@ -14,6 +14,7 @@ export const payslipLineItemsTable = sqliteTable('payslip_line_items', {
     .notNull(),
   units: numeric('units').notNull(),
   paymentDate: integer('payment_date', { mode: 'timestamp' }).notNull(),
+  createAtAmountCents: integer('create_at_amount_cents'),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
   createdById: integer('created_by_id')
     .references(() => usersTable.id)

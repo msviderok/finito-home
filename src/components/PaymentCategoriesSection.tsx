@@ -223,66 +223,68 @@ export function InlineRateEditor(props: {
       )}
       {submitError && <p className="text-xs text-destructive">{submitError}</p>}
 
-      <Collapsible open={historyOpen} onOpenChange={setHistoryOpen}>
-        <CollapsibleTrigger
-          render={(triggerProps, state) => (
-            <Button type="button" variant="ghost" size="sm" className="h-7 w-fit px-2" {...triggerProps}>
-              Previous rates
-              <ChevronDown className={cn('transition-transform duration-150', { 'rotate-180': state.open })} />
-            </Button>
-          )}
-        />
-        <CollapsibleContent className="pt-2">
-          <SmallTable className="bg-transparent shadow-none">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-b-0 hover:bg-transparent">
-                  <TableHead className={cn(smallTableHeadClass, 'h-6')}>Amount</TableHead>
-                  <TableHead className={cn(smallTableHeadClass, 'h-6')}>Effective</TableHead>
-                  <TableHead className={cn(smallTableHeadClass, 'h-6')}>Updated</TableHead>
-                  <TableHead className={cn(smallTableHeadClass, 'h-6 w-8')} />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {props.history.map((entry) => {
-                  const showDismiss = hasConflictingRates && isRateEffectiveAt(entry, props.viewAsOfAt);
-                  return (
-                    <TableRow
-                      key={entry.id}
-                      className={cn(
-                        smallTableRowClass,
-                        props.currentRate.id === entry.id ? 'bg-primary/5' : 'opacity-60',
-                      )}
-                    >
-                      <TableCell className={cn(smallTableCellClass, 'font-medium tabular-nums')}>
-                        <span className="inline-flex items-center gap-1">
-                          {formatCurrency(entry.amount)}
-                          {props.currentRate.id === entry.id && <Badge variant="secondary">Current</Badge>}
-                        </span>
-                      </TableCell>
-                      <TableCell className={cn(smallTableCellClass, 'text-muted-foreground tabular-nums')}>
-                        {format(entry.effectiveFrom, 'MMM yyyy')}
-                      </TableCell>
-                      <TableCell className={cn(smallTableCellClass, 'text-muted-foreground tabular-nums')}>
-                        {format(entry.createdAt, 'MMM d, yyyy')}
-                      </TableCell>
-                      <TableCell className={cn(smallTableCellClass, 'text-right')}>
-                        {showDismiss && (
-                          <RateDismissButton
-                            amount={entry.amount}
-                            disabled={dismissRate.isPending}
-                            onConfirm={() => dismissRate.mutate({ rateId: entry.id })}
-                          />
+      {props.history.length > 1 && (
+        <Collapsible open={historyOpen} onOpenChange={setHistoryOpen}>
+          <CollapsibleTrigger
+            render={(triggerProps, state) => (
+              <Button type="button" variant="ghost" size="sm" className="h-7 w-fit px-2" {...triggerProps}>
+                Previous rates
+                <ChevronDown className={cn('transition-transform duration-150', { 'rotate-180': state.open })} />
+              </Button>
+            )}
+          />
+          <CollapsibleContent className="pt-2">
+            <SmallTable className="bg-transparent shadow-none">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-b-0 hover:bg-transparent">
+                    <TableHead className={cn(smallTableHeadClass, 'h-6')}>Amount</TableHead>
+                    <TableHead className={cn(smallTableHeadClass, 'h-6')}>Effective</TableHead>
+                    <TableHead className={cn(smallTableHeadClass, 'h-6')}>Updated</TableHead>
+                    <TableHead className={cn(smallTableHeadClass, 'h-6 w-8')} />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {props.history.map((entry) => {
+                    const showDismiss = hasConflictingRates && isRateEffectiveAt(entry, props.viewAsOfAt);
+                    return (
+                      <TableRow
+                        key={entry.id}
+                        className={cn(
+                          smallTableRowClass,
+                          props.currentRate.id === entry.id ? 'bg-primary/5' : 'opacity-60',
                         )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </SmallTable>
-        </CollapsibleContent>
-      </Collapsible>
+                      >
+                        <TableCell className={cn(smallTableCellClass, 'font-medium tabular-nums')}>
+                          <span className="inline-flex items-center gap-1">
+                            {formatCurrency(entry.amount)}
+                            {props.currentRate.id === entry.id && <Badge variant="secondary">Current</Badge>}
+                          </span>
+                        </TableCell>
+                        <TableCell className={cn(smallTableCellClass, 'text-muted-foreground tabular-nums')}>
+                          {format(entry.effectiveFrom, 'MMM yyyy')}
+                        </TableCell>
+                        <TableCell className={cn(smallTableCellClass, 'text-muted-foreground tabular-nums')}>
+                          {format(entry.createdAt, 'MMM d, yyyy')}
+                        </TableCell>
+                        <TableCell className={cn(smallTableCellClass, 'text-right')}>
+                          {showDismiss && (
+                            <RateDismissButton
+                              amount={entry.amount}
+                              disabled={dismissRate.isPending}
+                              onConfirm={() => dismissRate.mutate({ rateId: entry.id })}
+                            />
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </SmallTable>
+          </CollapsibleContent>
+        </Collapsible>
+      )}
     </div>
   );
 }
