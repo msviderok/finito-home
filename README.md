@@ -2,7 +2,7 @@
 
 ## How to Run
 
-**Prerequisites:** [Bun](https://bun.sh/) and [pnpm](https://pnpm.io/).
+**Prerequisites:** [Node.js](https://nodejs.org/) and [pnpm](https://pnpm.io/).
 
 ```bash
 # 1. Install dependencies
@@ -23,8 +23,8 @@ TURSO_AUTH_TOKEN=your-token
 
 ```bash
 # 2. Apply database migrations and seed the database
-pnpm db migrate
-bun src/db/seed.ts
+pnpm drizzle-kit migrate
+pnpm db:seed
 
 # 3. Start the dev server
 pnpm dev
