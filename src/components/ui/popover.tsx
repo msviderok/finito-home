@@ -80,7 +80,7 @@ function PopoverContent({
   VariantProps<typeof popoverContentVariants>) {
   return (
     <PopoverPrimitive.Portal>
-      <PopoverPrimitive.Backdrop className="fixed inset-0 min-h-dvh bg-black opacity-20 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-[-webkit-touch-callout:none]:absolute dark:opacity-50" />
+      <PopoverPrimitive.Backdrop className="fixed inset-0 min-h-dvh bg-black opacity-10 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-[-webkit-touch-callout:none]:absolute dark:opacity-50" />
       <PopoverPrimitive.Positioner
         align={align}
         alignOffset={alignOffset}

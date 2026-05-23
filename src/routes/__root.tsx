@@ -7,10 +7,10 @@ import { EffectiveDateProvider, useEffectiveDate } from '@/lib/hooks/useEffectiv
 import type { AppRouter } from '@/lib/trpc';
 import appCss from '@/styles.css?url';
 import type { QueryClient } from '@tanstack/react-query';
-import { ClientOnly, createRootRouteWithContext, HeadContent, Scripts } from '@tanstack/react-router';
+import { createRootRouteWithContext, HeadContent, Scripts } from '@tanstack/react-router';
 import type { TRPCOptionsProxy } from '@trpc/tanstack-react-query';
 import { format } from 'date-fns';
-import { AlertTriangleIcon } from 'lucide-react';
+import { History } from 'lucide-react';
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -39,14 +39,14 @@ function RootDocument(props: { children: React.ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body className="@max/main:mx-auto container mx-auto flex max-w-7xl flex-col">
+      <body className="@max/main:mx-auto container mx-auto flex h-full min-h-screen max-w-4xl flex-col">
         <TooltipProvider>
           <EffectiveDateProvider>
             <AppNavigation />
-            <main className="flex flex-1 flex-col">
+            <main className="flex h-full flex-1 flex-col">
               <div className="@container/main flex flex-1 flex-col gap-2">
                 <div className="flex flex-col gap-4 p-4 md:gap-6 md:p-6">
-                  <div className="grid min-h-0 max-w-full grid-cols-[1fr] gap-6 lg:grid-cols-[1fr_auto]">
+                  <div className="grid min-h-0 max-w-full grid-cols-[1fr] gap-6 lg:grid-cols-[1fr_1fr]">
                     {props.children}
                   </div>
                 </div>
@@ -65,26 +65,24 @@ function RootDocument(props: { children: React.ReactNode }) {
 function AppNavigation() {
   const { isRetroactiveView, effectiveDate, setEffectiveDate } = useEffectiveDate();
   return (
-    <ClientOnly>
-      <header className="flex h-12 shrink-0 items-center gap-2 border-b">
-        <div className="flex w-full items-center justify-between gap-2 px-4 md:gap-4 md:px-6">
-          <div className="flex items-center justify-between gap-2">
-            <ThemeToggle />
-            <MonthPickerField
-              aria-label="View data as of month"
-              className="h-auto bg-background/80 backdrop-blur"
-              value={effectiveDate}
-              onChange={setEffectiveDate}
-            />
-          </div>
-          {isRetroactiveView && (
-            <Alert className="max-w-max border-0 bg-transparent text-amber-400">
-              <AlertTriangleIcon />
-              <AlertTitle className="font-bold">View effective of: {format(effectiveDate, 'MMMM yyyy')}</AlertTitle>
-            </Alert>
-          )}
+    <header className="flex h-12 shrink-0 items-center gap-2 border-b">
+      <div className="flex w-full items-center justify-between gap-2 px-4 md:gap-4 md:px-6">
+        <div className="flex items-center justify-between gap-2">
+          <ThemeToggle />
+          <MonthPickerField
+            aria-label="View data as of month"
+            className="h-auto bg-background/80 backdrop-blur"
+            value={effectiveDate}
+            onChange={setEffectiveDate}
+          />
         </div>
-      </header>
-    </ClientOnly>
+        {isRetroactiveView && (
+          <Alert className="flex max-w-max items-center border-orange-800 bg-orange-200 text-orange-900">
+            <History />
+            <AlertTitle className="font-bold">Effective date: {format(effectiveDate, 'MMMM yyyy')}</AlertTitle>
+          </Alert>
+        )}
+      </div>
+    </header>
   );
 }

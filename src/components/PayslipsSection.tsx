@@ -502,6 +502,7 @@ function PaymentCategoryCombobox(props: {
     <div className="flex flex-col gap-2">
       <Combobox<CategoryOption>
         value={null}
+        autoHighlight
         inputValue={inputValue}
         itemToStringLabel={(option) => option.label}
         onInputValueChange={setInputValue}
@@ -511,7 +512,7 @@ function PaymentCategoryCombobox(props: {
           setInputValue('');
         }}
       >
-        <ComboboxInput placeholder="Select category" className="w-full" showClear={inputValue.length > 0} />
+        <ComboboxInput autoFocus placeholder="Select category" className="w-full" showClear={inputValue.length > 0} />
         <ComboboxContent>
           <ComboboxList>
             {filteredOptions.map((option) => (
@@ -545,7 +546,7 @@ function DraftLineItemRow(props: {
         const category = props.categoryOptions.find((option) => option.value === categoryField.input);
         return (
           <TableRow className={smallTableRowClass}>
-            <TableCell className={cn(smallTableCellClass, 'align-top')}>
+            <TableCell className={cn(smallTableCellClass, 'align-middle')}>
               <input {...categoryField.props} type="hidden" value={String(categoryField.input ?? '')} />
               <span className="font-medium">{category?.label ?? 'Payment category'}</span>
               {category && (
@@ -554,10 +555,10 @@ function DraftLineItemRow(props: {
                 </span>
               )}
             </TableCell>
-            <TableCell className={cn(smallTableCellClass, 'align-top')}>
+            <TableCell className={cn(smallTableCellClass, 'align-middle')}>
               <Field of={props.form} path={['lineItems', props.index, 'hours']}>
                 {(hoursField) => (
-                  <>
+                  <div className="flex flex-col gap-1">
                     <Input
                       {...hoursField.props}
                       type="text"
@@ -567,12 +568,11 @@ function DraftLineItemRow(props: {
                       aria-invalid={hoursField.errors ? true : undefined}
                       className="h-7"
                     />
-                    {hoursField.errors && <span className="text-destructive">{hoursField.errors[0]}</span>}
-                  </>
+                  </div>
                 )}
               </Field>
             </TableCell>
-            <TableCell className={cn(smallTableCellClass, 'text-right align-top')}>
+            <TableCell className={cn(smallTableCellClass, 'text-right align-middle')}>
               <Field of={props.form} path={['lineItems', props.index, 'hours']}>
                 {(hoursField) => {
                   const hours = Number(hoursField.input);

@@ -115,7 +115,7 @@ export function PaymentCategoriesSection(props: { employeeId: number; onCreateRa
       </SmallTable>
 
       <Popover handle={historyPopover}>
-        <PopoverContent className="w-auto">
+        <PopoverContent className="w-auto" align="end">
           <SmallTable className="bg-transparent shadow-none">
             <Table>
               <TableHeader>
