@@ -17,7 +17,8 @@ export const popoverContentVariants = cva(
         default: 'border-foreground/50 bg-popover text-popover-foreground ring-foreground/10',
         destructive:
           'border-destructive/40 bg-(--destructive-popover) text-muted-foreground shadow-destructive/10 ring-destructive/20',
-        success: 'border-success/40 bg-(--success-popover) text-muted-foreground shadow-success/10 ring-success/20',
+        success:
+          'border-success/40 bg-(--success-popover) text-muted-foreground shadow-success/10 ring-success/20 dark:brightness-150',
       },
     },
     defaultVariants: {
@@ -80,7 +81,7 @@ function PopoverContent({
   VariantProps<typeof popoverContentVariants>) {
   return (
     <PopoverPrimitive.Portal>
-      <PopoverPrimitive.Backdrop className="fixed inset-0 min-h-dvh bg-black opacity-10 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-[-webkit-touch-callout:none]:absolute dark:opacity-50" />
+      <PopoverPrimitive.Backdrop className="fixed inset-0 min-h-dvh bg-black opacity-10 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-[-webkit-touch-callout:none]:absolute dark:opacity-10" />
       <PopoverPrimitive.Positioner
         align={align}
         alignOffset={alignOffset}

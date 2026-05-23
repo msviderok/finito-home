@@ -183,6 +183,7 @@ export function RateAmount(props: {
   const formId = `rate-form-${props.rate.id}`;
   const inputRef = useRef<HTMLInputElement>(null);
   const { effectiveDate } = useEffectiveDate();
+  const initialAmount = (props.rate.amountCents / 100).toFixed(2);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const form = useForm({
@@ -190,7 +191,7 @@ export function RateAmount(props: {
     validate: 'submit',
     revalidate: 'input',
     initialInput: {
-      amount: (props.rate.amountCents / 100).toFixed(2),
+      amount: initialAmount,
     },
   });
 
@@ -216,8 +217,16 @@ export function RateAmount(props: {
   };
 
   useEffect(() => {
-    reset(form, { initialInput: { amount: (props.rate.amountCents / 100).toFixed(2) } });
-  }, [effectiveDate]);
+    setConfirmOpen(false);
+    reset(form, { initialInput: { amount: initialAmount } });
+  }, [effectiveDate, initialAmount, props.rate.id]);
+
+  useEffect(() => {
+    if (props.editing) {
+      setConfirmOpen(false);
+      reset(form, { initialInput: { amount: initialAmount } });
+    }
+  }, [initialAmount, props.editing]);
 
   return (
     <Popover open={confirmOpen} onOpenChange={setConfirmOpen}>
@@ -293,47 +302,49 @@ export function RateAmount(props: {
                         }
                       }}
                     />
-                    <PopoverContent anchor={inputRef} side="top" className="w-auto gap-2" variant="success">
-                      <div className="flex items-center gap-2">
-                        <AlertTriangleIcon className="size-4 text-success/70" />
-                        <span className="text-success/70">Update rate?</span>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="text-muted-foreground/50 tabular-nums line-through">
-                          {currencyFormatter.format(props.rate.amount)}
-                        </span>
-                        <ArrowRight className="size-3 shrink-0 opacity-70" aria-hidden />
-                        <span className="font-semibold text-success tabular-nums">
-                          {currencyFormatter.format(Number(field.input))}
-                        </span>
-                      </div>
-                      {field.errors && <p className="text-xs text-destructive">{field.errors[0]}</p>}
-                      {form.errors && <p className="text-xs text-destructive">{form.errors[0]}</p>}
-                      <div className="flex flex-wrap items-center">
-                        <Button
-                          type="button"
-                          size="xs"
-                          variant="success"
-                          disabled={form.isSubmitting || isSaving || form.isDirty === false}
-                          aria-label="Confirm new rate"
-                          onClick={() => void submitConfirmedRate()}
-                        >
-                          {isSaving && <Loader2Icon className="size-3 animate-spin" />}
-                          Confirm
-                        </Button>
-                        <Button
-                          type="button"
-                          size="xs"
-                          variant="ghost"
-                          disabled={form.isSubmitting || isSaving}
-                          onClick={onSettled}
-                          aria-label="Discard changes"
-                          className="ml-2"
-                        >
-                          Discard
-                        </Button>
-                      </div>
-                    </PopoverContent>
+                    {confirmOpen && (
+                      <PopoverContent anchor={inputRef} side="top" className="w-auto gap-2" variant="success">
+                        <div className="flex items-center gap-2">
+                          <AlertTriangleIcon className="size-4 text-success/70" />
+                          <span className="text-success/70">Update rate?</span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="text-muted-foreground/50 tabular-nums line-through">
+                            {currencyFormatter.format(props.rate.amount)}
+                          </span>
+                          <ArrowRight className="size-3 shrink-0 opacity-70" aria-hidden />
+                          <span className="font-semibold text-success tabular-nums">
+                            {currencyFormatter.format(Number(field.input))}
+                          </span>
+                        </div>
+                        {field.errors && <p className="text-xs text-destructive">{field.errors[0]}</p>}
+                        {form.errors && <p className="text-xs text-destructive">{form.errors[0]}</p>}
+                        <div className="flex flex-wrap items-center">
+                          <Button
+                            type="button"
+                            size="xs"
+                            variant="success"
+                            disabled={form.isSubmitting || isSaving || form.isDirty === false}
+                            aria-label="Confirm new rate"
+                            onClick={() => void submitConfirmedRate()}
+                          >
+                            {isSaving && <Loader2Icon className="size-3 animate-spin" />}
+                            Confirm
+                          </Button>
+                          <Button
+                            type="button"
+                            size="xs"
+                            variant="ghost"
+                            disabled={form.isSubmitting || isSaving}
+                            onClick={onSettled}
+                            aria-label="Discard changes"
+                            className="ml-2"
+                          >
+                            Discard
+                          </Button>
+                        </div>
+                      </PopoverContent>
+                    )}
                   </div>
                 )}
               </Field>

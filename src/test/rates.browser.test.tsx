@@ -83,6 +83,34 @@ describe('rates (browser)', () => {
     await expect.element(screen.getByText('$25.00')).toBeVisible();
   });
 
+  it('keeps the rate confirmation closed when editing again after discard or confirm', async () => {
+    const { screen } = await renderBrowserWorkbench({
+      employeeId: 1,
+      rates: [createCategoryRate()],
+      initialViewAsOfMonth: startOfMonth(new Date('2026-05-01')),
+    });
+
+    await screen.getByRole('button', { name: 'Update rate' }).click();
+    await screen.getByRole('textbox').fill('31.00');
+    await screen.getByRole('button', { name: 'Save rate' }).click({ force: true });
+    await screen.getByRole('button', { name: 'Discard changes' }).click();
+
+    await expect.element(screen.getByRole('button', { name: 'Confirm new rate' })).not.toBeInTheDocument();
+    await screen.getByRole('button', { name: 'Update rate' }).click();
+    await expect.element(screen.getByRole('button', { name: 'Confirm new rate' })).not.toBeInTheDocument();
+    await expect.element(screen.getByRole('textbox')).toHaveValue('30.00');
+
+    await screen.getByRole('textbox').fill('32.00');
+    await screen.getByRole('button', { name: 'Save rate' }).click({ force: true });
+    await screen.getByRole('button', { name: 'Confirm new rate' }).click();
+
+    await expect.element(screen.getByText('$32.00')).toBeVisible();
+    await expect.element(screen.getByRole('button', { name: 'Confirm new rate' })).not.toBeInTheDocument();
+    await screen.getByRole('button', { name: 'Update rate' }).click();
+    await expect.element(screen.getByRole('button', { name: 'Confirm new rate' })).not.toBeInTheDocument();
+    await expect.element(screen.getByRole('textbox')).toHaveValue('32.00');
+  });
+
   it('shows rate history for the category', async () => {
     const { screen } = await renderBrowserWorkbench({
       employeeId: 1,
