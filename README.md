@@ -50,6 +50,8 @@ The test suite covers:
 - Component-level tests for create rate, edit rate, dismiss rate, and create payslip flows using a mocked tRPC layer
 - Browser UI tests that drive the full rendered workbench via Playwright, asserting amounts, totals, and mutation payloads end-to-end
 
+The tests were generated entirely with AI assistance. They are useful as a regression net for the demo flows for the purposes of the demo, but they should be treated as AI-generated coverage rather than a carefully hand-designed test strategy.
+
 ---
 
 ## Tech Stack

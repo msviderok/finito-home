@@ -33,7 +33,13 @@ function getUrl() {
   if (typeof window !== 'undefined') {
     return `${window.location.origin}/api/trpc`;
   }
-  return `http://localhost:${env.PORT}/api/trpc`;
+
+  const vercelHost = env.VERCEL_PROJECT_PRODUCTION_URL ?? env.VERCEL_BRANCH_URL ?? env.VERCEL_URL;
+  if (vercelHost) {
+    return `${vercelHost.startsWith('http') ? vercelHost : `https://${vercelHost}`}/api/trpc`;
+  }
+
+  return `http://localhost:${env.PORT ?? 3000}/api/trpc`;
 }
 
 function isTRPCClientError(error: unknown): error is TRPCClientError<AppRouter> {
