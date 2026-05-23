@@ -10,9 +10,10 @@ import { render, type RenderOptions } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import type { CategoryRate } from '@/lib/category-rates';
 import { formatMonthInputValue } from '@/lib/date';
+import { EffectiveDateProvider } from '@/lib/hooks/useEffectiveDate';
+import { format } from 'date-fns';
 import type { AppRouter } from '@/lib/trpc';
 import { trpc } from '@/router';
-import { indexSearchSchema } from '@/routes/index';
 import type { TRPCOptionsProxy } from '@trpc/tanstack-react-query';
 
 export function createTestQueryClient() {
@@ -37,7 +38,6 @@ export async function renderWithProviders(
   const indexRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/',
-    validateSearch: indexSearchSchema,
     component: () => ui,
   });
   const router = createTanStackRouter({
@@ -49,7 +49,15 @@ export async function renderWithProviders(
       queryClient,
       trpc,
     },
-    Wrap: ({ children }) => <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>,
+    Wrap: ({ children }) => (
+      <QueryClientProvider client={queryClient}>
+        <EffectiveDateProvider
+          initialInput={initialViewAsOfMonth != null ? format(initialViewAsOfMonth, 'MM-yyyy') : undefined}
+        >
+          {children}
+        </EffectiveDateProvider>
+      </QueryClientProvider>
+    ),
   });
   await router.load({ sync: true });
 

@@ -10,13 +10,15 @@ const buttonVariants = cva(
       variant: {
         default: 'bg-primary text-primary-foreground hover:bg-primary/80',
         outline:
-          'border-border hover:bg-input/50 hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:bg-input/30',
+          'border-border hover:bg-input/50 hover:text-foreground in-data-[variant=destructive]:border-destructive/30 in-data-[variant=destructive]:bg-transparent in-data-[variant=destructive]:text-muted-foreground in-data-[variant=destructive]:hover:border-destructive/45 in-data-[variant=destructive]:hover:bg-destructive/10 in-data-[variant=destructive]:hover:text-foreground in-data-[variant=success]:border-success/30 in-data-[variant=success]:bg-transparent in-data-[variant=success]:text-muted-foreground in-data-[variant=success]:hover:border-success/45 in-data-[variant=success]:hover:bg-success/10 in-data-[variant=success]:hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:bg-input/30 dark:in-data-[variant=destructive]:bg-transparent dark:in-data-[variant=success]:bg-transparent',
         secondary:
           'bg-secondary text-secondary-foreground hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground',
         ghost:
-          'hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50',
+          'hover:bg-muted hover:text-foreground in-data-[variant=destructive]:text-muted-foreground in-data-[variant=destructive]:hover:bg-destructive/10 in-data-[variant=destructive]:hover:text-foreground in-data-[variant=success]:text-muted-foreground in-data-[variant=success]:hover:bg-success/10 in-data-[variant=success]:hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50',
         destructive:
-          'bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40',
+          'border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40',
+        success:
+          'border-success/30 bg-success/10 text-success hover:bg-success/20 focus-visible:border-success/40 focus-visible:ring-success/20 dark:bg-success/20 dark:hover:bg-success/30 dark:focus-visible:ring-success/40',
         link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {
@@ -44,7 +46,14 @@ function Button({
   size = 'default',
   ...props
 }: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
-  return <ButtonPrimitive data-slot="button" className={cn(buttonVariants({ variant, size, className }))} {...props} />;
+  return (
+    <ButtonPrimitive
+      data-slot="button"
+      data-variant={variant}
+      className={cn(buttonVariants({ variant, size, className }))}
+      {...props}
+    />
+  );
 }
 
 export { Button, buttonVariants };

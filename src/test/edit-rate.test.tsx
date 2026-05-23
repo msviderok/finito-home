@@ -1,7 +1,7 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { format, startOfMonth } from 'date-fns';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { InlineRateEditor } from '@/components/PaymentCategoriesSection';
+import { RateAmount } from '@/components/PaymentCategoriesSection';
 import { hourlyCategoryRates } from './fixtures';
 import { renderWithProviders } from './render';
 
@@ -14,15 +14,7 @@ describe('edit rate', () => {
 
   it('submits revised amount with effective from from retroactive view', async () => {
     const [, previousRate] = hourlyCategoryRates;
-    await renderWithProviders(
-      <InlineRateEditor
-        currentRate={hourlyCategoryRates[0]}
-        history={hourlyCategoryRates}
-        employeeId={1}
-        onCreateRate={onCreateRate}
-      />,
-      { initialViewAsOfMonth: new Date('2026-03-01T00:00:00') },
-    );
+    await renderWithProviders(<RateAmount rate={hourlyCategoryRates[0]} editing={false} onSettled={() => {}} />);
 
     expect(screen.getByText('$25.00')).toBeTruthy();
     expect(screen.queryByLabelText(/^Rate$/i)).toBeNull();

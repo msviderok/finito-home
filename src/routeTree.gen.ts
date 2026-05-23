@@ -9,13 +9,25 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as EmployeesRouteImport } from './routes/employees'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as EmployeesIdRouteImport } from './routes/employees.$id'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api.trpc.$'
 
+const EmployeesRoute = EmployeesRouteImport.update({
+  id: '/employees',
+  path: '/employees',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const EmployeesIdRoute = EmployeesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => EmployeesRoute,
 } as any)
 const ApiTrpcSplatRoute = ApiTrpcSplatRouteImport.update({
   id: '/api/trpc/$',
@@ -25,38 +37,59 @@ const ApiTrpcSplatRoute = ApiTrpcSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/employees': typeof EmployeesRouteWithChildren
+  '/employees/$id': typeof EmployeesIdRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/employees': typeof EmployeesRouteWithChildren
+  '/employees/$id': typeof EmployeesIdRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/employees': typeof EmployeesRouteWithChildren
+  '/employees/$id': typeof EmployeesIdRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/trpc/$'
+  fullPaths: '/' | '/employees' | '/employees/$id' | '/api/trpc/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/trpc/$'
-  id: '__root__' | '/' | '/api/trpc/$'
+  to: '/' | '/employees' | '/employees/$id' | '/api/trpc/$'
+  id: '__root__' | '/' | '/employees' | '/employees/$id' | '/api/trpc/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  EmployeesRoute: typeof EmployeesRouteWithChildren
   ApiTrpcSplatRoute: typeof ApiTrpcSplatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/employees': {
+      id: '/employees'
+      path: '/employees'
+      fullPath: '/employees'
+      preLoaderRoute: typeof EmployeesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/employees/$id': {
+      id: '/employees/$id'
+      path: '/$id'
+      fullPath: '/employees/$id'
+      preLoaderRoute: typeof EmployeesIdRouteImport
+      parentRoute: typeof EmployeesRoute
     }
     '/api/trpc/$': {
       id: '/api/trpc/$'
@@ -68,8 +101,21 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface EmployeesRouteChildren {
+  EmployeesIdRoute: typeof EmployeesIdRoute
+}
+
+const EmployeesRouteChildren: EmployeesRouteChildren = {
+  EmployeesIdRoute: EmployeesIdRoute,
+}
+
+const EmployeesRouteWithChildren = EmployeesRoute._addFileChildren(
+  EmployeesRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  EmployeesRoute: EmployeesRouteWithChildren,
   ApiTrpcSplatRoute: ApiTrpcSplatRoute,
 }
 export const routeTree = rootRouteImport

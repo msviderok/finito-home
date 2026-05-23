@@ -1,6 +1,6 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { InlineRateEditor } from '@/components/PaymentCategoriesSection';
+import { RateAmount } from '@/components/PaymentCategoriesSection';
 import { overwrittenHourlyRates } from './fixtures';
 import { dismissRateMutation } from './mock-trpc';
 import { renderWithProviders } from './render';
@@ -11,10 +11,9 @@ describe('dismiss rate', () => {
   });
 
   it('shows dismiss controls when multiple rates apply at the view-as-of date', async () => {
-    await renderWithProviders(
-      <InlineRateEditor currentRate={overwrittenHourlyRates[1]} history={overwrittenHourlyRates} employeeId={1} />,
-      { initialViewAsOfMonth: new Date('2026-03-01T00:00:00') },
-    );
+    await renderWithProviders(<RateAmount rate={overwrittenHourlyRates[1]} editing={false} onSettled={() => {}} />, {
+      initialViewAsOfMonth: new Date('2026-03-01T00:00:00'),
+    });
 
     expect(screen.getByRole('button', { name: 'Dismiss latest change' })).toBeTruthy();
 
@@ -25,10 +24,9 @@ describe('dismiss rate', () => {
 
   it('dismisses latest rate change from the primary button', async () => {
     const [, overwriteRate] = overwrittenHourlyRates;
-    await renderWithProviders(
-      <InlineRateEditor currentRate={overwriteRate} history={overwrittenHourlyRates} employeeId={1} />,
-      { initialViewAsOfMonth: new Date('2026-03-01T00:00:00') },
-    );
+    await renderWithProviders(<RateAmount rate={overwriteRate} editing={false} onSettled={() => {}} />, {
+      initialViewAsOfMonth: new Date('2026-03-01T00:00:00'),
+    });
 
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss latest change' }));
     fireEvent.click(screen.getByRole('button', { name: 'Confirm dismiss' }));
@@ -41,10 +39,9 @@ describe('dismiss rate', () => {
 
   it('calls dismiss mutation after confirmation', async () => {
     const [, overwriteRate] = overwrittenHourlyRates;
-    await renderWithProviders(
-      <InlineRateEditor currentRate={overwriteRate} history={overwrittenHourlyRates} employeeId={1} />,
-      { initialViewAsOfMonth: new Date('2026-03-01T00:00:00') },
-    );
+    await renderWithProviders(<RateAmount rate={overwriteRate} editing={false} onSettled={() => {}} />, {
+      initialViewAsOfMonth: new Date('2026-03-01T00:00:00'),
+    });
 
     fireEvent.click(screen.getByRole('button', { name: 'Previous rates' }));
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss $28.00 rate' }));

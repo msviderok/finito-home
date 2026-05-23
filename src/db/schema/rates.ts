@@ -18,12 +18,6 @@ export const ratesTable = sqliteTable('rates', {
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
 });
 
-export const rateAmountSchema = v.pipe(
-  v.string('Enter an amount'),
-  v.nonEmpty('Enter an amount'),
-  v.check(isValidRateAmountInput, 'Enter a valid amount'),
-);
-
 export const rateInsertSchema = createInsertSchema(ratesTable, {
   amountCents: (schema) => v.pipe(schema, v.minValue(0, 'Amount must be 0 or greater')),
   effectiveFrom: () => v.date('Enter an effective from date'),
@@ -38,7 +32,12 @@ export const rateCreateMutationSchema = v.object({
 
 export const rateCreateFormFieldsSchema = v.omit(
   createInsertSchema(ratesTable, {
-    amountCents: () => rateAmountSchema,
+    amountCents: () =>
+      v.pipe(
+        v.string('Enter an amount'),
+        v.nonEmpty('Enter an amount'),
+        v.check(isValidRateAmountInput, 'Enter a valid amount'),
+      ),
   }),
   ['id', 'createdAt', 'effectiveFrom'],
 );

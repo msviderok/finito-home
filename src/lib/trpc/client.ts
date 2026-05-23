@@ -37,7 +37,7 @@ function getUrl() {
     return `https://${env.VERCEL_URL}/api/trpc`;
   }
 
-  return `http://127.0.0.1:${env.PORT}/api/trpc`;
+  return `http://localhost:${env.PORT}/api/trpc`;
 }
 
 function isTRPCClientError(error: unknown): error is TRPCClientError<AppRouter> {

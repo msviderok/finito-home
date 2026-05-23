@@ -1,7 +1,7 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { startOfMonth } from 'date-fns';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { InlineRateEditor } from '@/components/PaymentCategoriesSection';
+import { RateAmount } from '@/components/PaymentCategoriesSection';
 import { createCategoryRate } from './fixtures';
 import { renderWithProviders } from './render';
 
@@ -14,10 +14,9 @@ describe('create rate', () => {
 
   it('submits a new rate with updated amount and view-as-of effective from', async () => {
     const currentRate = createCategoryRate();
-    await renderWithProviders(
-      <InlineRateEditor currentRate={currentRate} history={[currentRate]} employeeId={1} onCreateRate={onCreateRate} />,
-      { initialViewAsOfMonth: new Date('2026-06-01T00:00:00') },
-    );
+    await renderWithProviders(<RateAmount rate={currentRate} editing={false} onSettled={onCreateRate} />, {
+      initialViewAsOfMonth: new Date('2026-06-01T00:00:00'),
+    });
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit rate' }));
     fireEvent.change(screen.getByLabelText(/^Rate$/i), { target: { value: '32.50' } });
@@ -34,9 +33,7 @@ describe('create rate', () => {
 
   it('does not submit when rate amount is empty', async () => {
     const currentRate = createCategoryRate();
-    await renderWithProviders(
-      <InlineRateEditor currentRate={currentRate} history={[currentRate]} employeeId={1} onCreateRate={onCreateRate} />,
-    );
+    await renderWithProviders(<RateAmount rate={currentRate} editing={false} onSettled={onCreateRate} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit rate' }));
     fireEvent.change(screen.getByLabelText(/^Rate$/i), { target: { value: '' } });

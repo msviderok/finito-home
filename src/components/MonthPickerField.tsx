@@ -1,11 +1,11 @@
-import { format, startOfMonth } from 'date-fns';
+import { format } from 'date-fns';
 import { CalendarDays } from 'lucide-react';
 import { useState } from 'react';
 import { MonthPicker } from '@/components/ui/monthpicker';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 
-export function MonthPickerField(props: { value: Date; onChange: (month: Date) => void; className?: string }) {
+export function MonthPickerField(props: { value: Date; onChange: (value: string) => void; className?: string }) {
   const [open, setOpen] = useState(false);
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -18,7 +18,8 @@ export function MonthPickerField(props: { value: Date; onChange: (month: Date) =
           className="p-0"
           selectedMonth={props.value}
           onMonthSelect={(date) => {
-            props.onChange(startOfMonth(date));
+            const newDate = format(date, 'MM-yyyy');
+            props.onChange(newDate);
             setOpen(false);
           }}
         />

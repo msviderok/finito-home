@@ -206,7 +206,7 @@ function MonthCal({
               data-slot="month-picker-month"
               data-selected={selected ? '' : undefined}
               onClick={() => {
-                onMonthSelect?.(new Date(menuYear, m.number));
+                onMonthSelect?.(new Date(menuYear, m.number, 1));
               }}
               disabled={disabled}
               className={monthPickerButtonVariants({

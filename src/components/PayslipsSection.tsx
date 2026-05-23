@@ -1,5 +1,4 @@
 import { MonthPickerField } from '@/components/MonthPickerField';
-import { PayslipsSectionSkeleton } from '@/components/loading-skeletons';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import {
@@ -32,7 +31,7 @@ import { comparePayslipTotalsAt, getLineBaseAmountCents, getLineBaseRateCents } 
 import { useTRPC } from '@/lib/trpc/client';
 import { Field, FieldArray, Form, getInput, insert, remove, useForm } from '@formisch/react';
 import { useQuery } from '@tanstack/react-query';
-import { format, startOfMonth } from 'date-fns';
+import { parse, format, startOfMonth } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { ArrowRight, ChevronDown, Plus, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -393,7 +392,7 @@ function AddPayslipForm(props: { employeeId: number; onCreatePayslip: any }) {
                   ? startOfMonth(field.input)
                   : effectiveDate
               }
-              onChange={(month) => field.onChange(month)}
+              onChange={(value) => field.onChange(parse(value, 'MM-yyyy', new Date(2000, 0, 1)))}
             />
           </label>
         )}
@@ -601,5 +600,46 @@ function DraftLineItemRow(props: {
         );
       }}
     </Field>
+  );
+}
+
+function PayslipsSectionSkeleton() {
+  return (
+    <section className="flex flex-col gap-2">
+      <div className="flex items-center justify-between gap-3">
+        <Skeleton className="h-3.5 w-16" />
+        <Skeleton className="h-6 w-24" />
+      </div>
+      <div className="overflow-hidden rounded-md border bg-card shadow-sm">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-b-0 hover:bg-transparent">
+              <TableHead className="h-7 w-8 bg-muted/40 px-1" />
+              <TableHead className="h-7 bg-muted/40 px-2">
+                <Skeleton className="h-3 w-10" />
+              </TableHead>
+              <TableHead className="h-7 bg-muted/40 px-2 text-right">
+                <Skeleton className="ml-auto h-3 w-12" />
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: 2 }, (_, index) => (
+              <TableRow key={index} className="hover:bg-transparent">
+                <TableCell className="w-8 px-1 py-1.5">
+                  <Skeleton className="size-3.5" />
+                </TableCell>
+                <TableCell className="px-2 py-1.5">
+                  <Skeleton className="h-3.5 w-20" />
+                </TableCell>
+                <TableCell className="px-2 py-1.5 text-right">
+                  <Skeleton className="ml-auto h-3.5 w-14" />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </section>
   );
 }

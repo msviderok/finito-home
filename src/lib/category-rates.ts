@@ -55,6 +55,11 @@ export function groupCategoryRates(rates: CategoryRate[], at: Date = new Date())
   return [...groups.entries()].map(([paymentCategoryId, groupRates]) => {
     const sortedRates = [...groupRates].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
     const currentRate = sortedRates.find((rate) => isRateEffectiveAt(rate, at)) ?? sortedRates[sortedRates.length - 1]!;
+
+    if (currentRate.paymentCategory.name === 'Hourly Rate') {
+      console.log({ currentRate, sortedRates, at });
+    }
+
     return {
       paymentCategoryId,
       paymentCategory: currentRate.paymentCategory,
