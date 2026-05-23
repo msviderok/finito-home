@@ -1,37 +1,40 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { format, startOfMonth } from 'date-fns';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { RateAmount } from '@/components/PaymentCategoriesSection';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { PaymentCategoriesSection } from '@/components/PaymentCategoriesSection';
 import { hourlyCategoryRates } from './fixtures';
+import { createRateMutation } from './mock-trpc';
 import { renderWithProviders } from './render';
+import { resetTestStores, seedEmployeeRates } from './stores';
 
 describe('edit rate', () => {
-  const onCreateRate = vi.fn();
-
   beforeEach(() => {
-    onCreateRate.mockReset();
+    resetTestStores();
+    createRateMutation.mockReset();
+    seedEmployeeRates(1, hourlyCategoryRates);
   });
 
   it('submits revised amount with effective from from retroactive view', async () => {
     const [, previousRate] = hourlyCategoryRates;
-    await renderWithProviders(<RateAmount rate={hourlyCategoryRates[0]} editing={false} onSettled={() => {}} />);
+    await renderWithProviders(<PaymentCategoriesSection employeeId={1} onCreateRate={() => {}} />, {
+      initialViewAsOfMonth: new Date('2026-03-01T00:00:00'),
+    });
 
     expect(screen.getByText('$25.00')).toBeTruthy();
-    expect(screen.queryByLabelText(/^Rate$/i)).toBeNull();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Edit rate' }));
-    fireEvent.change(screen.getByLabelText(/^Rate$/i), { target: { value: '28.00' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Update rate' }));
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: '28.00' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save rate' }));
     fireEvent.click(screen.getByRole('button', { name: 'Save rate' }));
 
-    await waitFor(() => expect(onCreateRate).toHaveBeenCalledOnce());
-    expect(onCreateRate).toHaveBeenCalledWith({
+    await waitFor(() => expect(createRateMutation).toHaveBeenCalledOnce());
+    expect(createRateMutation).toHaveBeenCalledWith({
       amount: 28,
       employeeId: 1,
       paymentCategoryId: 1,
       effectiveFrom: startOfMonth(new Date('2026-03-01T00:00:00')),
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Previous rates' }));
+    fireEvent.click(screen.getByRole('button', { name: 'View history' }));
     expect(screen.getByText(format(previousRate.createdAt, 'MMM d, yyyy'))).toBeTruthy();
     expect(screen.getByText(format(previousRate.effectiveFrom, 'MMM yyyy'))).toBeTruthy();
   });

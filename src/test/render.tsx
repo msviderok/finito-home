@@ -8,8 +8,9 @@ import {
 } from '@tanstack/react-router';
 import { render, type RenderOptions } from '@testing-library/react';
 import type { ReactElement } from 'react';
-import type { CategoryRate } from '@/lib/category-rates';
 import { formatMonthInputValue } from '@/lib/date';
+import type { CategoryRate } from '@/lib/category-rates';
+import { seedEmployeeRates } from './stores';
 import { EffectiveDateProvider } from '@/lib/hooks/useEffectiveDate';
 import { format } from 'date-fns';
 import type { AppRouter } from '@/lib/trpc';
@@ -80,6 +81,7 @@ export async function renderPayslipsSection(
 }
 
 export async function seedEmployeeCategoryRates(queryClient: QueryClient, employeeId: number, rates: CategoryRate[]) {
+  seedEmployeeRates(employeeId, rates);
   const queryOptions = trpc.paymentCategories.forEmployee.queryOptions({ employeeId });
   queryClient.setQueryData(queryOptions.queryKey, rates);
   await queryClient.prefetchQuery(queryOptions);

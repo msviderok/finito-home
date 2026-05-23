@@ -28,6 +28,18 @@ export function getLatestRateChange<T extends { effectiveFrom: Date; createdAt: 
   return { latest: effective[0]!, previous: effective[1]! };
 }
 
+export function getRateAfterDismiss<T extends { id: number; effectiveFrom: Date; createdAt: Date }>(
+  rates: T[],
+  dismissedRateId: number,
+  at: Date,
+) {
+  const remainingRates = rates.filter((rate) => rate.id !== dismissedRateId);
+  if (remainingRates.length === 0) return null;
+
+  const sortedRates = [...remainingRates].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  return sortedRates.find((rate) => isRateEffectiveAt(rate, at)) ?? sortedRates[sortedRates.length - 1]!;
+}
+
 export function findCurrentRateForCategory(
   rates: Array<Pick<CategoryRate, 'paymentCategoryId' | 'effectiveFrom' | 'amountCents'>>,
   paymentCategoryId: number,
@@ -55,10 +67,6 @@ export function groupCategoryRates(rates: CategoryRate[], at: Date = new Date())
   return [...groups.entries()].map(([paymentCategoryId, groupRates]) => {
     const sortedRates = [...groupRates].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
     const currentRate = sortedRates.find((rate) => isRateEffectiveAt(rate, at)) ?? sortedRates[sortedRates.length - 1]!;
-
-    if (currentRate.paymentCategory.name === 'Hourly Rate') {
-      console.log({ currentRate, sortedRates, at });
-    }
 
     return {
       paymentCategoryId,

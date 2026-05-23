@@ -1,10 +1,10 @@
 import { MonthPickerField } from '@/components/MonthPickerField';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { Alert, AlertTitle } from '@/components/ui/alert';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { EffectiveDateProvider, useEffectiveDate } from '@/lib/hooks/useEffectiveDate';
 import type { AppRouter } from '@/lib/trpc';
+import { cn } from '@/lib/utils';
 import appCss from '@/styles.css?url';
 import type { QueryClient } from '@tanstack/react-query';
 import { createRootRouteWithContext, HeadContent, Scripts } from '@tanstack/react-router';
@@ -71,17 +71,25 @@ function AppNavigation() {
           <ThemeToggle />
           <MonthPickerField
             aria-label="View data as of month"
-            className="h-auto bg-background/80 backdrop-blur"
+            className="bg-background/80 backdrop-blur"
             value={effectiveDate}
             onChange={setEffectiveDate}
           />
         </div>
-        {isRetroactiveView && (
-          <Alert className="flex max-w-max items-center border-orange-800 bg-orange-200 text-orange-900">
-            <History />
-            <AlertTitle className="font-bold">Effective date: {format(effectiveDate, 'MMMM yyyy')}</AlertTitle>
-          </Alert>
-        )}
+        <div className="flex flex-col items-end justify-end">
+          <div className="flex items-center justify-end gap-1 text-muted-foreground/80">
+            <History className="size-2.5" />
+            <span className="text-[12px]">Effective Date</span>
+          </div>
+          <span
+            className={cn(
+              'flex flex-row gap-0 text-[14px] leading-tight font-bold text-primary/70',
+              isRetroactiveView && 'text-destructive/70',
+            )}
+          >
+            {format(effectiveDate, 'MMMM yyyy')}
+          </span>
+        </div>
       </div>
     </header>
   );

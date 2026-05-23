@@ -8,6 +8,7 @@
     "build": "vp build",
     "preview": "vp preview",
     "test": "vp test run",
+    "test:browser": "vp test run --project browser",
     "lint": "eslint",
     "format": "vp fmt \"**/*.{ts,tsx,js,jsx}\"",
     "typecheck": "tsc --noEmit",
@@ -64,10 +65,12 @@
     "eslint-plugin-import-x": "catalog:",
     "eslint-plugin-n": "catalog:",
     "jsdom": "catalog:",
+    "playwright": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vite-plus": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "vitest-browser-react": "catalog:"
   },
   "packageManager": "pnpm@11.1.3"
 }

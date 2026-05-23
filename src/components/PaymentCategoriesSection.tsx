@@ -8,7 +8,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { getLatestRateChange, groupCategoryRates } from '@/lib/category-rates';
+import { getRateAfterDismiss, groupCategoryRates } from '@/lib/category-rates';
 import { currencyFormatter, isValidRateAmountInput, sanitizeRateAmountInput } from '@/lib/currency';
 import { useEffectiveDate } from '@/lib/hooks/useEffectiveDate';
 import { useTRPC, type RouterOutputs } from '@/lib/trpc/client';
@@ -72,7 +72,7 @@ export function PaymentCategoriesSection(props: { employeeId: number; onCreateRa
                   {group.rates.length > 1 && (
                     <RateDismissButton
                       rate={group.currentRate}
-                      previousAmount={getLatestRateChange(group.rates, effectiveDate)?.previous.amount}
+                      replacementAmount={getRateAfterDismiss(group.rates, group.currentRate.id, effectiveDate)?.amount}
                     />
                   )}
                   <Tooltip>
@@ -279,6 +279,7 @@ export function RateAmount(props: {
                       className="h-5 w-20 text-right"
                       type="text"
                       inputMode="decimal"
+                      placeholder="0.00"
                       value={field.input ?? ''}
                       onChange={(event) => field.onChange(sanitizeRateAmountInput(event.target.value))}
                       onKeyDown={(event) => {
@@ -341,7 +342,7 @@ export function RateAmount(props: {
 
 function RateDismissButton(props: {
   rate: RouterOutputs['paymentCategories']['forEmployee'][number];
-  previousAmount?: number;
+  replacementAmount?: number;
 }) {
   const [open, setOpen] = useState(false);
   const trpc = useTRPC();
@@ -381,11 +382,11 @@ function RateDismissButton(props: {
           <span className="text-muted-foreground/50 tabular-nums line-through">
             {currencyFormatter.format(props.rate.amount)}
           </span>
-          {props.previousAmount != null && (
+          {props.replacementAmount != null && (
             <>
               <ArrowRight className="size-3 shrink-0 opacity-70" aria-hidden />
               <span className="font-semibold text-destructive tabular-nums">
-                {currencyFormatter.format(props.previousAmount)}
+                {currencyFormatter.format(props.replacementAmount)}
               </span>
             </>
           )}

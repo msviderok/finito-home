@@ -2,19 +2,25 @@ import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PayslipsSection } from '@/components/PayslipsSection';
 import { selectComboboxOption, getHoursInputForCategory } from './combobox';
-import { categoryRatesByEmployee } from './mock-trpc-store';
+import { resetTestStores, seedEmployeeRates } from './stores';
 import { payslipCategoryRates } from './fixtures';
 import { renderPayslipsSection } from './render';
 import { viewAsOfInstant } from '@/lib/date';
 
 const may2026ViewAsOfAt = viewAsOfInstant(new Date('2026-05-01'));
 
+function openCreatePayslipForm(monthLabel = 'May') {
+  fireEvent.click(screen.getByRole('button', { name: 'Create Payslip' }));
+  fireEvent.click(screen.getByRole('button', { name: monthLabel }));
+}
+
 describe('create payslip', () => {
   const onCreatePayslip = vi.fn();
 
   beforeEach(() => {
     onCreatePayslip.mockReset();
-    categoryRatesByEmployee.set(1, payslipCategoryRates);
+    resetTestStores();
+    seedEmployeeRates(1, payslipCategoryRates);
   });
 
   it('creates a payslip with view-as-of payment date and line items', async () => {
@@ -24,7 +30,7 @@ describe('create payslip', () => {
       initialViewAsOfMonth: new Date('2026-05-01'),
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Create Payslip' }));
+    openCreatePayslipForm();
     fireEvent.click(screen.getByRole('button', { name: 'Add payment' }));
 
     await selectComboboxOption('Select category', 'Hourly Rate');
@@ -52,7 +58,7 @@ describe('create payslip', () => {
       rates: payslipCategoryRates,
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Create Payslip' }));
+    openCreatePayslipForm();
     fireEvent.click(screen.getByRole('button', { name: 'Add payment' }));
     await selectComboboxOption('Select category', 'Hourly Rate');
     fireEvent.change(getHoursInputForCategory('Hourly Rate'), { target: { value: '6' } });
@@ -66,18 +72,17 @@ describe('create payslip', () => {
     expect(onCreatePayslip.mock.calls[0][0].lineItems).toHaveLength(2);
   });
 
-  it('does not submit without line items', async () => {
+  it('disables save button when no line items', async () => {
     await renderPayslipsSection(<PayslipsSection employeeId={1} onCreatePayslip={onCreatePayslip} />, {
       employeeId: 1,
       rates: payslipCategoryRates,
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Create Payslip' }));
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy());
+    openCreatePayslipForm();
+    const saveButton = (await screen.findByRole('button', { name: 'Save' })) as HTMLButtonElement;
+    await waitFor(() => expect(saveButton.disabled).toBe(true));
 
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-
-    await waitFor(() => expect(screen.getByText('Add at least one payment category')).toBeTruthy());
+    fireEvent.click(saveButton);
     expect(onCreatePayslip).not.toHaveBeenCalled();
   });
 });

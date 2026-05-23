@@ -4,7 +4,7 @@ import { employeesTable } from './schema/employees';
 import { ratesTable } from './schema/rates';
 import { paymentCategoriesTable } from './schema/paymentCategories';
 
-async function main() {
+export async function seed() {
   await db.transaction(async (tx) => {
     await tx.insert(usersTable).values([{ name: 'Admin User', email: 'admin@example.com' }]);
 
@@ -37,5 +37,3 @@ async function main() {
     );
   });
 }
-
-void main();

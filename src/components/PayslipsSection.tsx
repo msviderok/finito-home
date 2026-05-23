@@ -33,8 +33,8 @@ import { Field, FieldArray, Form, getInput, insert, remove, useForm } from '@for
 import { useQuery } from '@tanstack/react-query';
 import { parse, format, startOfMonth } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { ArrowRight, ChevronDown, Plus, Trash2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { ChevronDown, Plus, X } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 
 type CategoryOption = {
   value: number;
@@ -44,36 +44,73 @@ type CategoryOption = {
 
 export function PayslipsSection(props: { employeeId: number; onCreatePayslip: any }) {
   const trpc = useTRPC();
+  const { effectiveDate } = useEffectiveDate();
   const [showForm, setShowForm] = useState(false);
+  const [draftPaymentMonth, setDraftPaymentMonth] = useState<Date | null>(null);
+  const [hasLineItems, setHasLineItems] = useState(false);
   const { data: payslips = [], isPending } = useQuery(
     trpc.employees.payslips.list.queryOptions({ employeeId: props.employeeId }),
   );
+
+  const closeForm = () => {
+    setShowForm(false);
+    setDraftPaymentMonth(null);
+    setHasLineItems(false);
+  };
 
   if (isPending) {
     return <PayslipsSectionSkeleton />;
   }
 
+  const creatingForMonth = startOfMonth(draftPaymentMonth ?? effectiveDate);
+
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-xs font-semibold">Pay slips</h2>
+        <div className="flex min-w-0 items-center gap-2">
+          <h2 className="text-xs font-semibold">Payslips</h2>
+          {showForm && (
+            <>
+              <span className="h-3 w-px shrink-0 bg-border" aria-hidden />
+              <p className="text-xs">
+                New for <span className="font-bold">{format(creatingForMonth, 'MMM yyyy')}</span>
+              </p>
+            </>
+          )}
+        </div>
         {showForm ? (
-          <Button type="submit" form="add-payslip-form" size="sm">
-            Save
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={closeForm}>
+              Cancel
+            </Button>
+            <Button type="submit" form="add-payslip-form" size="sm" disabled={!hasLineItems}>
+              Save
+            </Button>
+          </div>
         ) : (
-          <Button type="button" size="sm" onClick={() => setShowForm(true)}>
-            Create Payslip
-          </Button>
+          <MonthPickerField
+            size="sm"
+            variant="default"
+            label="Create Payslip"
+            aria-label="Create Payslip"
+            value={effectiveDate}
+            onChange={(value) => {
+              setDraftPaymentMonth(parse(value, 'MM-yyyy', new Date(2000, 0, 1)));
+              setHasLineItems(false);
+              setShowForm(true);
+            }}
+          />
         )}
       </div>
 
       {showForm && (
         <AddPayslipForm
           employeeId={props.employeeId}
+          initialPaymentDate={draftPaymentMonth ?? effectiveDate}
+          onHasLineItemsChange={setHasLineItems}
           onCreatePayslip={async (input: any) => {
             await props.onCreatePayslip(input);
-            setShowForm(false);
+            closeForm();
           }}
         />
       )}
@@ -146,8 +183,8 @@ export function PayslipPanel(props: { payslipId: number; employeeId: number }) {
         aria-expanded={open}
         aria-label={
           differs
-            ? `${paymentLabel} pay slip, ${formatCurrency(formatCents(baseTotalCents))} original, ${formatCurrency(formatCents(viewTotalCents))} at ${viewMonthLabel}`
-            : `${paymentLabel} pay slip, ${formatCurrency(formatCents(displayTotalCents))}`
+            ? `${paymentLabel} payslip, ${formatCurrency(formatCents(baseTotalCents))} original, ${formatCurrency(formatCents(viewTotalCents))} at ${viewMonthLabel}`
+            : `${paymentLabel} payslip, ${formatCurrency(formatCents(displayTotalCents))}`
         }
         onClick={() => setOpen((value) => !value)}
         onKeyDown={(event) => {
@@ -163,14 +200,9 @@ export function PayslipPanel(props: { payslipId: number; employeeId: number }) {
             className={cn('size-3.5 text-muted-foreground transition-transform duration-150', { 'rotate-180': open })}
           />
         </TableCell>
-        <TableCell className={cn(smallTableCellClass, 'font-medium tabular-nums')}>{paymentLabel}</TableCell>
+        <TableCell className={cn(smallTableCellClass, 'font-medium')}>{paymentLabel}</TableCell>
         <TableCell className={cn(smallTableCellClass, 'text-right')}>
-          <PayslipTotalDisplay
-            baseTotalCents={baseTotalCents}
-            viewTotalCents={viewTotalCents}
-            differs={differs}
-            viewMonthLabel={viewMonthLabel}
-          />
+          <PayslipTotalDisplay baseTotalCents={baseTotalCents} viewTotalCents={viewTotalCents} differs={differs} />
         </TableCell>
       </TableRow>
       {open && (
@@ -209,7 +241,6 @@ export function PayslipPanel(props: { payslipId: number; employeeId: number }) {
                         baseTotalCents={baseTotalCents}
                         viewTotalCents={viewTotalCents}
                         differs={differs}
-                        viewMonthLabel={viewMonthLabel}
                         compact
                       />
                     </TableCell>
@@ -228,30 +259,18 @@ function PayslipTotalDisplay(props: {
   baseTotalCents: number;
   viewTotalCents: number;
   differs: boolean;
-  viewMonthLabel: string;
   compact?: boolean;
 }) {
-  if (!props.differs) {
-    return (
-      <span className={cn('font-medium tabular-nums', props.compact && 'text-xs font-semibold')}>
-        {formatCurrency(formatCents(props.baseTotalCents))}
-      </span>
-    );
-  }
+  const baseTotal = formatCurrency(formatCents(props.baseTotalCents));
+  const viewTotal = formatCurrency(formatCents(props.viewTotalCents));
 
-  return (
-    <div className={cn('flex flex-col items-end gap-0.5', props.compact && 'text-xs')}>
-      <div className="flex flex-wrap items-center justify-end gap-1 rounded-md bg-amber-500/10 px-1.5 py-0.5 text-amber-950 dark:text-amber-100">
-        <span className="tabular-nums line-through opacity-70">
-          {formatCurrency(formatCents(props.baseTotalCents))}
-        </span>
-        <ArrowRight className="size-3 shrink-0 opacity-70" aria-hidden />
-        <span className={cn('font-semibold tabular-nums', props.compact && 'text-xs')}>
-          {formatCurrency(formatCents(props.viewTotalCents))}
-        </span>
-      </div>
-      <span className="text-[0.625rem] text-muted-foreground">At {props.viewMonthLabel}</span>
+  return props.differs ? (
+    <div className="flex flex-col justify-end gap-0">
+      <span className={cn('font-medium', props.compact && 'text-xs font-semibold')}>{viewTotal}</span>
+      <span className="text-[0.5rem] text-muted-foreground">({baseTotal})</span>
     </div>
+  ) : (
+    <span className={cn('font-medium', props.compact && 'text-xs font-semibold')}>{viewTotal}</span>
   );
 }
 
@@ -285,22 +304,21 @@ function PayslipLineItemRow(props: {
     props.totalsDiffer && baseRateCents != null && viewGroup && baseRateCents !== viewGroup.currentRate.amountCents;
 
   return (
-    <TableRow className={cn(smallTableRowClass, lineDiffers && 'bg-amber-500/5')}>
+    <TableRow className={smallTableRowClass}>
       <TableCell className={cn(smallTableCellClass, 'font-medium')}>
         {props.lineItem.paymentCategory?.name ?? 'Payment category'}
       </TableCell>
-      <TableCell className={cn(smallTableCellClass, 'text-right text-muted-foreground tabular-nums')}>
-        {units.toFixed(2)}
-      </TableCell>
+      <TableCell className={cn(smallTableCellClass, 'text-right text-muted-foreground')}>{units.toFixed(2)}</TableCell>
       <TableCell className={cn(smallTableCellClass, 'text-right')}>
         {rateDiffers ? (
           <PayslipAdjustedValue
             paymentValue={formatCurrency(formatCents(baseRateCents!))}
             viewValue={formatCurrency(viewGroup!.currentRate.amount)}
+            valueClass="text-muted-foreground"
             suffix="/hr"
           />
         ) : (
-          <span className="text-muted-foreground tabular-nums">
+          <span className="text-muted-foreground">
             {baseRateCents != null ? `${formatCurrency(formatCents(baseRateCents))}/hr` : '—'}
           </span>
         )}
@@ -310,39 +328,50 @@ function PayslipLineItemRow(props: {
           <PayslipAdjustedValue
             paymentValue={formatCurrency(formatCents(baseAmountCents))}
             viewValue={formatCurrency(formatCents(viewAmountCents))}
+            valueClass="font-medium"
           />
         ) : (
-          <span className="font-medium tabular-nums">{formatCurrency(formatCents(baseAmountCents))}</span>
+          <span className="font-medium">{formatCurrency(formatCents(baseAmountCents))}</span>
         )}
       </TableCell>
     </TableRow>
   );
 }
 
-function PayslipAdjustedValue(props: { paymentValue: string; viewValue: string; suffix?: string }) {
+function PayslipAdjustedValue(props: {
+  paymentValue: string;
+  viewValue: string;
+  suffix?: string;
+  valueClass?: string;
+}) {
+  const suffix = props.suffix ?? '';
   return (
-    <div className="inline-flex flex-wrap items-center justify-end gap-1 text-xs text-amber-950 dark:text-amber-100">
-      <span className="text-muted-foreground tabular-nums line-through opacity-70">
-        {props.paymentValue}
-        {props.suffix ?? ''}
+    <span className="inline-flex items-baseline justify-end gap-1.5">
+      <span className="text-[0.625rem] text-muted-foreground">
+        OG {props.paymentValue}
+        {suffix}
       </span>
-      <ArrowRight className="size-3 shrink-0 opacity-70" aria-hidden />
-      <span className="font-semibold tabular-nums">
+      <span className={cn(props.valueClass)}>
         {props.viewValue}
-        {props.suffix ?? ''}
+        {suffix}
       </span>
-    </div>
+    </span>
   );
 }
 
-function AddPayslipForm(props: { employeeId: number; onCreatePayslip: any }) {
+function AddPayslipForm(props: {
+  employeeId: number;
+  initialPaymentDate: Date;
+  onHasLineItemsChange: (hasLineItems: boolean) => void;
+  onCreatePayslip: any;
+}) {
   const trpc = useTRPC();
   const { effectiveDate } = useEffectiveDate();
   const form = useForm({
     schema: payslipDraftFormSchema,
     initialInput: {
       employeeId: props.employeeId,
-      paymentDate: effectiveDate,
+      paymentDate: props.initialPaymentDate,
       lineItems: [],
     },
     validate: 'submit',
@@ -376,85 +405,139 @@ function AddPayslipForm(props: { employeeId: number; onCreatePayslip: any }) {
           paymentDate: viewAsOfInstant(startOfMonth(output.paymentDate)),
         });
       }}
-      className="flex flex-col gap-3 border-t border-border pt-4"
+      className="flex flex-col gap-2"
     >
       <Field of={form} path={['employeeId']}>
         {(field) => <input {...field.props} type="hidden" value={String(field.input ?? '')} />}
-      </Field>
-      <Field of={form} path={['paymentDate']}>
-        {(field) => (
-          <label className="flex flex-col gap-1 self-start">
-            <span className="text-xs text-muted-foreground">Payment month</span>
-            <MonthPickerField
-              aria-label="Payment month"
-              value={
-                field.input instanceof Date && !Number.isNaN(field.input.getTime())
-                  ? startOfMonth(field.input)
-                  : effectiveDate
-              }
-              onChange={(value) => field.onChange(parse(value, 'MM-yyyy', new Date(2000, 0, 1)))}
-            />
-          </label>
-        )}
       </Field>
       <FieldArray of={form} path={['lineItems']}>
         {(lineItems) => {
           const draftItems = getInput(form, { path: ['lineItems'] }) ?? [];
           const selectedCategoryIds = new Set(draftItems.map((item) => item.paymentCategoryId).filter(Boolean));
           const availableOptions = categoryOptions.filter((option) => !selectedCategoryIds.has(option.value));
+          const hasItems = lineItems.items.length > 0;
+          const draftTotal = draftItems.reduce((total, item) => {
+            const category = categoryOptions.find((option) => option.value === item.paymentCategoryId);
+            const hours = Number(item.hours);
+            if (category && Number.isFinite(hours)) {
+              return total + category.rateAmount * hours;
+            }
+            return total;
+          }, 0);
+
+          if (categoriesLoading) {
+            return (
+              <div className="flex flex-col gap-2">
+                <Skeleton className="h-14 w-full rounded-md" />
+                <Skeleton className="h-7 w-24" />
+              </div>
+            );
+          }
 
           return (
-            <div className="flex flex-col gap-2">
-              {categoriesLoading && (
-                <div className="flex flex-col gap-2">
-                  <Skeleton className="h-14 w-full rounded-md" />
-                  <Skeleton className="h-7 w-24" />
-                </div>
-              )}
-              {!categoriesLoading && (
-                <SmallTable>
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-b-0 hover:bg-transparent">
-                        <TableHead className={smallTableHeadClass}>Category</TableHead>
-                        <TableHead className={cn(smallTableHeadClass, 'text-right')}>Hours</TableHead>
-                        <TableHead className={cn(smallTableHeadClass, 'text-right')}>Amount</TableHead>
-                        <TableHead className={cn(smallTableHeadClass, 'w-8')} />
+            <>
+              <LineItemsSync hasItems={hasItems} onChange={props.onHasLineItemsChange} />
+              <SmallTable>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-b-0 hover:bg-transparent">
+                      <TableHead className={cn(smallTableHeadClass, 'min-w-0')}>Category</TableHead>
+                      <TableHead className={cn(smallTableHeadClass, 'text-right')}>Hours</TableHead>
+                      <TableHead className={cn(smallTableHeadClass, 'w-28 text-right')}>Amount</TableHead>
+                      <TableHead className={cn(smallTableHeadClass, 'w-2 text-right')} />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {lineItems.items.map((itemId, index) => (
+                      <Field key={itemId} of={form} path={['lineItems', index, 'paymentCategoryId']}>
+                        {(categoryField) => {
+                          const category = categoryOptions.find((option) => option.value === categoryField.input)!;
+                          return (
+                            <TableRow className={smallTableRowClass}>
+                              <TableCell className={cn(smallTableCellClass, 'align-middle')}>
+                                <input {...categoryField.props} type="hidden" value={categoryField.input ?? ''} />
+                                <div className="flex flex-col gap-0">
+                                  <span className="font-medium">{category.label}</span>
+                                  {category && (
+                                    <span className="text-[12px] text-muted-foreground">
+                                      {formatCurrency(category.rateAmount)}/hr
+                                    </span>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell className={cn(smallTableCellClass, 'text-right align-middle')}>
+                                <Field of={form} path={['lineItems', index, 'hours']}>
+                                  {(hoursField) => (
+                                    <Input
+                                      {...hoursField.props}
+                                      autoFocus
+                                      type="text"
+                                      inputMode="decimal"
+                                      placeholder="0.00"
+                                      value={hoursField.input ?? ''}
+                                      onChange={(event) => hoursField.onChange(sanitizeHoursInput(event.target.value))}
+                                      aria-invalid={hoursField.errors ? true : undefined}
+                                      className="h-5 w-20 text-right"
+                                    />
+                                  )}
+                                </Field>
+                              </TableCell>
+                              <TableCell className={cn(smallTableCellClass, 'text-right align-middle')}>
+                                <Field of={form} path={['lineItems', index, 'hours']}>
+                                  {(hoursField) => {
+                                    const hours = Number(hoursField.input);
+                                    const total = category && Number.isFinite(hours) ? category.rateAmount * hours : 0;
+                                    return (
+                                      <span className="font-medium">
+                                        {hoursField.input ? formatCurrency(total) : formatCurrency(0)}
+                                      </span>
+                                    );
+                                  }}
+                                </Field>
+                              </TableCell>
+                              <TableCell className={cn(smallTableCellClass, 'w-8 text-right')}>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  aria-label="Remove line item"
+                                  onClick={() => remove(form, { path: ['lineItems'], at: index })}
+                                >
+                                  <X />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        }}
+                      </Field>
+                    ))}
+                    {availableOptions.length > 0 && (
+                      <AddPaymentRow
+                        options={availableOptions}
+                        onSelect={(option) =>
+                          insert(form, {
+                            path: ['lineItems'],
+                            initialInput: { paymentCategoryId: option.value, hours: '' },
+                          })
+                        }
+                      />
+                    )}
+                  </TableBody>
+                  {hasItems && (
+                    <TableFooter>
+                      <TableRow className="hover:bg-transparent">
+                        <TableCell colSpan={3} className={cn(smallTableCellClass, 'text-right text-xs font-semibold')}>
+                          Total
+                        </TableCell>
+                        <TableCell className={cn(smallTableCellClass, 'text-right')}>
+                          <span className="text-xs font-semibold">{formatCurrency(draftTotal)}</span>
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {lineItems.items.map((itemId, index) => (
-                        <DraftLineItemRow
-                          key={itemId}
-                          form={form}
-                          index={index}
-                          categoryOptions={categoryOptions}
-                          onRemove={() => remove(form, { path: ['lineItems'], at: index })}
-                        />
-                      ))}
-                    </TableBody>
-                  </Table>
-                </SmallTable>
-              )}
-              {!categoriesLoading && (
-                <AddPaymentControl
-                  options={availableOptions}
-                  onSelect={(option) => {
-                    insert(form, {
-                      path: ['lineItems'],
-                      initialInput: {
-                        paymentCategoryId: option.value,
-                        hours: '',
-                      },
-                    });
-                  }}
-                />
-              )}
-              {!categoriesLoading && availableOptions.length === 0 && draftItems.length > 0 && (
-                <p className="text-muted-foreground">All categories added</p>
-              )}
-              {lineItems.errors && <p className="text-destructive">{lineItems.errors[0]}</p>}
-            </div>
+                    </TableFooter>
+                  )}
+                </Table>
+              </SmallTable>
+            </>
           );
         }}
       </FieldArray>
@@ -462,37 +545,52 @@ function AddPayslipForm(props: { employeeId: number; onCreatePayslip: any }) {
   );
 }
 
-function AddPaymentControl(props: { options: CategoryOption[]; onSelect: (option: CategoryOption) => void }) {
+function LineItemsSync(props: { hasItems: boolean; onChange: (hasItems: boolean) => void }) {
+  useEffect(() => {
+    props.onChange(props.hasItems);
+  }, [props.hasItems]);
+  useEffect(() => {
+    return () => props.onChange(false);
+  }, []);
+  return null;
+}
+
+function AddPaymentRow(props: { options: CategoryOption[]; onSelect: (option: CategoryOption) => void }) {
   const [selectingCategory, setSelectingCategory] = useState(false);
-
-  if (props.options.length === 0) return null;
-
   if (selectingCategory) {
     return (
-      <PaymentCategoryCombobox
-        options={props.options}
-        onSelect={(option) => {
-          props.onSelect(option);
-          setSelectingCategory(false);
-        }}
-        onCancel={() => setSelectingCategory(false)}
-      />
+      <TableRow className={smallTableRowClass}>
+        <TableCell colSpan={4} className={cn(smallTableCellClass, 'p-0')}>
+          <PaymentCategoryCombobox
+            options={props.options}
+            onSelect={(option) => {
+              props.onSelect(option);
+              setSelectingCategory(false);
+            }}
+          />
+        </TableCell>
+      </TableRow>
     );
   }
-
   return (
-    <Button type="button" variant="outline" size="sm" className="self-start" onClick={() => setSelectingCategory(true)}>
-      <Plus data-icon="inline-start" />
-      Add payment
-    </Button>
+    <TableRow className="hover:bg-transparent">
+      <TableCell colSpan={4} className={cn(smallTableCellClass, 'p-0')}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="w-full rounded-none border-0"
+          onClick={() => setSelectingCategory(true)}
+        >
+          <Plus data-icon="inline-start" />
+          Add payment
+        </Button>
+      </TableCell>
+    </TableRow>
   );
 }
 
-function PaymentCategoryCombobox(props: {
-  options: CategoryOption[];
-  onSelect: (option: CategoryOption) => void;
-  onCancel?: () => void;
-}) {
+function PaymentCategoryCombobox(props: { options: CategoryOption[]; onSelect: (option: CategoryOption) => void }) {
   const [inputValue, setInputValue] = useState('');
   const filteredOptions = props.options.filter((option) =>
     option.label.toLowerCase().includes(inputValue.trim().toLowerCase()),
@@ -512,94 +610,25 @@ function PaymentCategoryCombobox(props: {
           setInputValue('');
         }}
       >
-        <ComboboxInput autoFocus placeholder="Select category" className="w-full" showClear={inputValue.length > 0} />
+        <ComboboxInput
+          autoFocus
+          placeholder="Select category"
+          className="w-full rounded-none border-0"
+          showClear={inputValue.length > 0}
+        />
         <ComboboxContent>
           <ComboboxList>
             {filteredOptions.map((option) => (
               <ComboboxItem key={option.value} value={option}>
                 <span className="flex-1">{option.label}</span>
-                <span className="text-muted-foreground tabular-nums">{formatCurrency(option.rateAmount)}/hr</span>
+                <span className="text-muted-foreground">{formatCurrency(option.rateAmount)}/hr</span>
               </ComboboxItem>
             ))}
           </ComboboxList>
-          <ComboboxEmpty>No categories available</ComboboxEmpty>
+          {filteredOptions.length === 0 && <ComboboxEmpty>No categories available</ComboboxEmpty>}
         </ComboboxContent>
       </Combobox>
-      {props.onCancel && (
-        <Button type="button" variant="ghost" size="sm" className="self-start" onClick={props.onCancel}>
-          Cancel
-        </Button>
-      )}
     </div>
-  );
-}
-
-function DraftLineItemRow(props: {
-  form: ReturnType<typeof useForm<typeof payslipDraftFormSchema>>;
-  index: number;
-  categoryOptions: CategoryOption[];
-  onRemove: () => void;
-}) {
-  return (
-    <Field of={props.form} path={['lineItems', props.index, 'paymentCategoryId']}>
-      {(categoryField) => {
-        const category = props.categoryOptions.find((option) => option.value === categoryField.input);
-        return (
-          <TableRow className={smallTableRowClass}>
-            <TableCell className={cn(smallTableCellClass, 'align-middle')}>
-              <input {...categoryField.props} type="hidden" value={String(categoryField.input ?? '')} />
-              <span className="font-medium">{category?.label ?? 'Payment category'}</span>
-              {category && (
-                <span className="mt-0.5 block text-muted-foreground tabular-nums">
-                  {formatCurrency(category.rateAmount)}/hr
-                </span>
-              )}
-            </TableCell>
-            <TableCell className={cn(smallTableCellClass, 'align-middle')}>
-              <Field of={props.form} path={['lineItems', props.index, 'hours']}>
-                {(hoursField) => (
-                  <div className="flex flex-col gap-1">
-                    <Input
-                      {...hoursField.props}
-                      type="text"
-                      inputMode="decimal"
-                      value={hoursField.input ?? ''}
-                      onChange={(event) => hoursField.onChange(sanitizeHoursInput(event.target.value))}
-                      aria-invalid={hoursField.errors ? true : undefined}
-                      className="h-7"
-                    />
-                  </div>
-                )}
-              </Field>
-            </TableCell>
-            <TableCell className={cn(smallTableCellClass, 'text-right align-middle')}>
-              <Field of={props.form} path={['lineItems', props.index, 'hours']}>
-                {(hoursField) => {
-                  const hours = Number(hoursField.input);
-                  const total = category && Number.isFinite(hours) ? category.rateAmount * hours : 0;
-                  return (
-                    <span className="font-medium tabular-nums">
-                      {hoursField.input ? formatCurrency(total) : formatCurrency(0)}
-                    </span>
-                  );
-                }}
-              </Field>
-            </TableCell>
-            <TableCell className={cn(smallTableCellClass, 'w-8 text-right')}>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                onClick={props.onRemove}
-                aria-label="Remove line item"
-              >
-                <Trash2 />
-              </Button>
-            </TableCell>
-          </TableRow>
-        );
-      }}
-    </Field>
   );
 }
 
