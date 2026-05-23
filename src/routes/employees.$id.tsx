@@ -14,7 +14,12 @@ export const Route = createFileRoute('/employees/$id')({
     parse: (raw) => v.parse(v.object({ id: v.pipe(v.string(), v.toNumber(), v.integer()) }), raw),
   },
   loader: async ({ context: { trpc, queryClient }, params }) => {
-    await queryClient.ensureQueryData(trpc.employees.get.queryOptions({ id: params.id }));
+    try {
+      await queryClient.ensureQueryData(trpc.employees.get.queryOptions({ id: params.id }));
+    } catch (error) {
+      console.log('[employees.$id loader] failed to prefetch employees.get', { id: params.id }, error);
+      throw error;
+    }
   },
   pendingComponent() {
     <div className="flex min-h-0 flex-1 flex-col gap-4">

@@ -10,7 +10,12 @@ import { ChevronRight } from 'lucide-react';
 export const Route = createFileRoute('/employees')({
   component: EmployeesRoute,
   loader: async ({ context: { trpc, queryClient } }) => {
-    await queryClient.ensureQueryData(trpc.employees.list.queryOptions());
+    try {
+      await queryClient.ensureQueryData(trpc.employees.list.queryOptions());
+    } catch (error) {
+      console.log('[employees loader] failed to prefetch employees.list', error);
+      throw error;
+    }
   },
   pendingComponent() {
     return (
