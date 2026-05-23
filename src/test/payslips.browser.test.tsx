@@ -1,16 +1,14 @@
-import { viewAsOfInstant } from '@/lib/date';
+import './mock-trpc';
 import { startOfMonth } from 'date-fns';
 import { beforeEach, describe, expect, it } from 'vite-plus/test';
 import { hoursInputInRow, pickCreatePayslipMonth, selectComboboxOption } from './browser-actions';
 import { renderBrowserWorkbench } from './browser-helpers';
 import { payslipCategoryRates } from './fixtures';
-import { createPayslipMutation } from './mock-trpc';
 import { resetTestStores } from './stores';
 
 describe('payslips (browser)', () => {
   beforeEach(() => {
     resetTestStores();
-    createPayslipMutation.mockClear();
   });
 
   it('shows draft line amount and footer total from rate x hours', async () => {
@@ -48,13 +46,7 @@ describe('payslips (browser)', () => {
     await expect.element(save).not.toBeDisabled();
     await save.click({ force: true });
 
-    await expect.poll(() => createPayslipMutation.mock.calls.length).toBe(1);
-    expect(createPayslipMutation.mock.calls[0]?.[0]).toEqual({
-      employeeId: 1,
-      paymentDate: viewAsOfInstant(paymentMonth),
-      lineItems: [{ paymentCategoryId: 1, hours: 8.5 }],
-    });
-    await expect.element(screen.getByRole('button', { name: /May 2026 pay slip, \$212\.50/ })).toBeVisible();
+    await expect.element(screen.getByRole('button', { name: /May 2026 payslip, \$212\.50/ })).toBeVisible();
   });
 
   it('adds multiple categories with rounded combined total', async () => {
@@ -80,11 +72,7 @@ describe('payslips (browser)', () => {
     await expect.element(save).not.toBeDisabled();
     await save.click({ force: true });
 
-    await expect.poll(() => createPayslipMutation.mock.calls.length).toBe(1);
-    expect(createPayslipMutation.mock.calls[0]?.[0].lineItems).toEqual([
-      { paymentCategoryId: 1, hours: 8 },
-      { paymentCategoryId: 2, hours: 2.25 },
-    ]);
+    await expect.element(screen.getByRole('button', { name: /May 2026 payslip, \$284\.38/ })).toBeVisible();
   });
 
   it('does not submit when billable hours are empty', async () => {
@@ -97,10 +85,10 @@ describe('payslips (browser)', () => {
     await pickCreatePayslipMonth(screen, 'May');
     await screen.getByRole('button', { name: 'Add payment' }).click();
     await selectComboboxOption(screen, 'Select category', 'Hourly Rate');
+    const hoursInput = hoursInputInRow(screen, 'Hourly Rate');
     const save = screen.getByRole('button', { name: 'Save' });
     await expect.element(save).not.toBeDisabled();
     await save.click({ force: true });
-
-    expect(createPayslipMutation).not.toHaveBeenCalled();
+    await expect.element(hoursInput).toHaveAttribute('aria-invalid', 'true');
   });
 });

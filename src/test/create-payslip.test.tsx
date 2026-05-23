@@ -64,7 +64,7 @@ describe('create payslip', () => {
     fireEvent.change(getHoursInputForCategory('Hourly Rate'), { target: { value: '6' } });
     fireEvent.click(screen.getByRole('button', { name: 'Add payment' }));
     await selectComboboxOption('Select category', 'Overtime Hourly');
-    expect(screen.getByText('All categories added')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Add payment' })).toBeNull();
     fireEvent.change(getHoursInputForCategory('Overtime Hourly'), { target: { value: '2' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 

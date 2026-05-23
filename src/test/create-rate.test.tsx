@@ -15,17 +15,17 @@ describe('create rate', () => {
   });
 
   it('submits a new rate with updated amount and view-as-of effective from', async () => {
-    await renderWithProviders(<PaymentCategoriesSection employeeId={1} onCreateRate={() => {}} />, {
+    await renderWithProviders(<PaymentCategoriesSection employeeId={1} onCreateRate={createRateMutation} />, {
       initialViewAsOfMonth: new Date('2026-06-01T00:00:00'),
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Update rate' }));
     fireEvent.change(screen.getByRole('textbox'), { target: { value: '32.50' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save rate' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Save rate' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirm new rate' }));
 
     await waitFor(() => expect(createRateMutation).toHaveBeenCalledOnce());
-    expect(createRateMutation).toHaveBeenCalledWith({
+    expect(createRateMutation.mock.calls[0]?.[0]).toEqual({
       amount: 32.5,
       employeeId: 1,
       paymentCategoryId: 1,
@@ -34,7 +34,7 @@ describe('create rate', () => {
   });
 
   it('does not submit when rate amount is empty', async () => {
-    await renderWithProviders(<PaymentCategoriesSection employeeId={1} onCreateRate={() => {}} />);
+    await renderWithProviders(<PaymentCategoriesSection employeeId={1} onCreateRate={createRateMutation} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Update rate' }));
     fireEvent.change(screen.getByRole('textbox'), { target: { value: '' } });

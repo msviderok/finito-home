@@ -2,31 +2,35 @@
 
 ## How to Run
 
-**Prerequisites:** [Node.js](https://nodejs.org/), [pnpm](https://pnpm.io/), and the [Vite+](https://viteplus.dev/) CLI (`vp`).
+**Prerequisites:** [Bun](https://bun.sh/) and [pnpm](https://pnpm.io/).
 
 ```bash
 # 1. Install dependencies
 pnpm install
-
-# 2. Apply database migrations (local SQLite)
-TURSO_CONNECTION_URL=file:local.db TURSO_AUTH_TOKEN=local pnpm drizzle-kit migrate
-
-# 3. Start the dev server
-pnpm dev:local
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
-
-### Remote Turso (optional)
-
-Create a `.env` file:
+Create a `.env` file. For a local SQLite database, use [local.db](local.db) with the local token or your Turso connection URL and token:
 
 ```env
+TURSO_CONNECTION_URL=file:local.db
+TURSO_AUTH_TOKEN=local
+
+# OR
+
 TURSO_CONNECTION_URL=https://your-database.turso.io
 TURSO_AUTH_TOKEN=your-token
 ```
 
-Then run `pnpm drizzle-kit migrate` and `pnpm dev`.
+```bash
+# 2. Apply database migrations and seed the database
+pnpm db migrate
+bun src/db/seed.ts
+
+# 3. Start the dev server
+pnpm dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
 
 ---
 

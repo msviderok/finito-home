@@ -1,3 +1,4 @@
+import { createPayslipMutation, createRateMutation, dismissRateMutation } from './mock-trpc';
 import { MonthPickerField } from '@/components/MonthPickerField';
 import { PaymentCategoriesSection } from '@/components/PaymentCategoriesSection';
 import { PayslipsSection } from '@/components/PayslipsSection';
@@ -6,9 +7,8 @@ import type { CategoryRate } from '@/lib/category-rates';
 import { formatMonthInputValue } from '@/lib/date';
 import { EffectiveDateProvider, useEffectiveDate } from '@/lib/hooks/useEffectiveDate';
 import type { AppRouter } from '@/lib/trpc';
-import { useTRPC } from '@/lib/trpc/client';
 import { trpc } from '@/router';
-import { QueryClient, QueryClientProvider, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import {
   createMemoryHistory,
   createRootRouteWithContext,
@@ -19,7 +19,7 @@ import {
 import type { TRPCOptionsProxy } from '@trpc/tanstack-react-query';
 import { format, startOfMonth } from 'date-fns';
 import { render } from 'vitest-browser-react';
-import { seedEmployeeRates } from './stores';
+import { categoryRatesByEmployee, payslipsByEmployee, seedEmployeeRates } from './stores';
 
 export function createTestQueryClient() {
   return new QueryClient({
@@ -31,22 +31,42 @@ export function createTestQueryClient() {
 }
 
 function ConnectedPayslipsSection(props: { employeeId: number }) {
-  const trpcClient = useTRPC();
   const queryClient = useQueryClient();
-  const createPayslip = useMutation(
-    trpcClient.employees.payslips.create.mutationOptions({
-      onSuccess: () => {
-        void queryClient.invalidateQueries(trpcClient.employees.payslips.list.queryFilter());
-      },
-    }),
+  return (
+    <PayslipsSection
+      employeeId={props.employeeId}
+      onCreatePayslip={async (input: any) => {
+        createPayslipMutation(input);
+        queryClient.setQueryData(
+          trpc.employees.payslips.list.queryOptions({ employeeId: props.employeeId }).queryKey,
+          (payslipsByEmployee.get(props.employeeId) ?? []) as any,
+        );
+      }}
+    />
   );
-  return <PayslipsSection employeeId={props.employeeId} onCreatePayslip={createPayslip.mutateAsync} />;
 }
 
 function EmployeeWorkbench(props: { employeeId: number }) {
+  const queryClient = useQueryClient();
   return (
     <div className="flex flex-col gap-6">
-      <PaymentCategoriesSection employeeId={props.employeeId} onCreateRate={() => {}} />
+      <PaymentCategoriesSection
+        employeeId={props.employeeId}
+        onCreateRate={async (input: any) => {
+          createRateMutation(input);
+          queryClient.setQueryData(
+            trpc.paymentCategories.forEmployee.queryOptions({ employeeId: props.employeeId }).queryKey,
+            categoryRatesByEmployee.get(props.employeeId) ?? [],
+          );
+        }}
+        onDismissRate={async (input: any) => {
+          dismissRateMutation(input);
+          queryClient.setQueryData(
+            trpc.paymentCategories.forEmployee.queryOptions({ employeeId: props.employeeId }).queryKey,
+            categoryRatesByEmployee.get(props.employeeId) ?? [],
+          );
+        }}
+      />
       <ConnectedPayslipsSection employeeId={props.employeeId} />
     </div>
   );

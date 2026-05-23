@@ -1,7 +1,6 @@
 import { migrate } from 'drizzle-orm/libsql/migrator';
 import { sql } from 'drizzle-orm';
 import { db } from '.';
-import { seed } from './seed';
 
 async function main() {
   await db.run(sql`PRAGMA foreign_keys = OFF`);
@@ -13,7 +12,6 @@ async function main() {
   }
   await db.run(sql`PRAGMA foreign_keys = ON`);
   await migrate(db, { migrationsFolder: './src/db/migrations' });
-  await seed();
   console.log('Database reset.');
 }
 

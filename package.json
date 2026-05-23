@@ -4,7 +4,6 @@
   "type": "module",
   "scripts": {
     "dev": "vp dev --port 3000",
-    "dev:local": "TURSO_CONNECTION_URL=file:local.db TURSO_AUTH_TOKEN=local vp dev --port 3000",
     "build": "vp build",
     "preview": "vp preview",
     "test": "vp test run",
@@ -14,7 +13,9 @@
     "typecheck": "tsc --noEmit",
     "prepare": "vp config",
     "db": "drizzle-kit",
-    "dbm": "pnpm db generate && pnpm db migrate"
+    "dbm": "pnpm db generate && pnpm db migrate",
+    "db:reset": "dotenv tsx src/db/reset.ts",
+    "db:seed": "dotenv tsx src/db/seed.ts"
   },
   "dependencies": {
     "@base-ui/react": "catalog:",
@@ -61,11 +62,14 @@
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "babel-plugin-react-compiler": "catalog:",
+    "dotenv": "catalog:",
+    "dotenv-cli": "catalog:",
     "drizzle-kit": "catalog:",
     "eslint-plugin-import-x": "catalog:",
     "eslint-plugin-n": "catalog:",
     "jsdom": "catalog:",
     "playwright": "catalog:",
+    "tsx": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vite-plus": "catalog:",

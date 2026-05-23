@@ -13,7 +13,7 @@ import { currencyFormatter, isValidRateAmountInput, sanitizeRateAmountInput } fr
 import { useEffectiveDate } from '@/lib/hooks/useEffectiveDate';
 import { useTRPC, type RouterOutputs } from '@/lib/trpc/client';
 import { cn } from '@/lib/utils';
-import { Field, Form, reset, useForm } from '@formisch/react';
+import { Field, Form, reset, useForm, validate } from '@formisch/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { AlertTriangleIcon, ArrowRight, Check, Edit2, HistoryIcon, Loader2Icon, Trash, XIcon } from 'lucide-react';
@@ -25,7 +25,7 @@ import { Skeleton } from './ui/skeleton';
 
 const historyPopover = createPopoverHandle();
 
-export function PaymentCategoriesSection(props: { employeeId: number; onCreateRate: any }) {
+export function PaymentCategoriesSection(props: { employeeId: number; onCreateRate: any; onDismissRate?: any }) {
   const trpc = useTRPC();
   const { effectiveDate } = useEffectiveDate();
   const [historyId, setHistoryId] = useState<number | null>(null);
@@ -62,6 +62,7 @@ export function PaymentCategoriesSection(props: { employeeId: number; onCreateRa
                   <RateAmount
                     rate={group.currentRate}
                     editing={editRateId === group.currentRate.id}
+                    onCreateRate={props.onCreateRate}
                     onSettled={() => setEditRateId(null)}
                   />
                 </TableCell>
@@ -73,6 +74,7 @@ export function PaymentCategoriesSection(props: { employeeId: number; onCreateRa
                     <RateDismissButton
                       rate={group.currentRate}
                       replacementAmount={getRateAfterDismiss(group.rates, group.currentRate.id, effectiveDate)?.amount}
+                      onDismissRate={props.onDismissRate}
                     />
                   )}
                   <Tooltip>
@@ -172,22 +174,17 @@ const rateAmountSchema = v.object({
 export function RateAmount(props: {
   rate: RouterOutputs['paymentCategories']['forEmployee'][number];
   editing: boolean;
+  onCreateRate: any;
   onSettled: () => void;
 }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const createRate = useMutation(
-    trpc.rates.create.mutationOptions({
-      onSuccess: () => {
-        void queryClient.invalidateQueries(trpc.paymentCategories.forEmployee.queryFilter());
-      },
-    }),
-  );
 
   const formId = `rate-form-${props.rate.id}`;
   const inputRef = useRef<HTMLInputElement>(null);
   const { effectiveDate } = useEffectiveDate();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const form = useForm({
     schema: rateAmountSchema,
     validate: 'submit',
@@ -199,8 +196,23 @@ export function RateAmount(props: {
 
   const onSettled = () => {
     setConfirmOpen(false);
+    setIsSaving(false);
     props.onSettled();
     reset(form);
+  };
+  const submitConfirmedRate = async () => {
+    const result = await validate(form, { shouldFocus: true });
+    if (!result.success) return;
+
+    setIsSaving(true);
+    await props.onCreateRate({
+      employeeId: props.rate.employeeId,
+      paymentCategoryId: props.rate.paymentCategoryId,
+      amount: Number(result.output.amount),
+      effectiveFrom: effectiveDate,
+    });
+    await queryClient.invalidateQueries(trpc.paymentCategories.forEmployee.queryFilter());
+    onSettled();
   };
 
   useEffect(() => {
@@ -218,21 +230,13 @@ export function RateAmount(props: {
               id={formId}
               key={effectiveDate.toISOString()}
               of={form}
-              onSubmit={async (output) => {
+              onSubmit={async () => {
                 if (!confirmOpen) {
                   setConfirmOpen(true);
                   return;
                 }
 
-                createRate.mutate(
-                  {
-                    employeeId: props.rate.employeeId,
-                    paymentCategoryId: props.rate.paymentCategoryId,
-                    amount: Number(output.amount),
-                    effectiveFrom: effectiveDate,
-                  },
-                  { onSuccess: onSettled },
-                );
+                await submitConfirmedRate();
               }}
               className="flex flex-wrap items-center justify-end gap-2"
             >
@@ -247,7 +251,7 @@ export function RateAmount(props: {
                             variant="outline"
                             size="icon-xs"
                             aria-label="Cancel editing rate"
-                            disabled={form.isSubmitting}
+                            disabled={form.isSubmitting || isSaving}
                             onClick={onSettled}
                           >
                             <XIcon />
@@ -263,7 +267,7 @@ export function RateAmount(props: {
                             type="submit"
                             size="icon-xs"
                             aria-label="Save rate"
-                            disabled={form.isSubmitting || form.isDirty === false}
+                            disabled={form.isSubmitting || isSaving || form.isDirty === false}
                           >
                             <Check />
                           </Button>
@@ -282,6 +286,7 @@ export function RateAmount(props: {
                       placeholder="0.00"
                       value={field.input ?? ''}
                       onChange={(event) => field.onChange(sanitizeRateAmountInput(event.target.value))}
+                      aria-invalid={field.errors ? true : undefined}
                       onKeyDown={(event) => {
                         if (event.key === 'Escape' && form.isDirty === false) {
                           onSettled();
@@ -306,21 +311,21 @@ export function RateAmount(props: {
                       {form.errors && <p className="text-xs text-destructive">{form.errors[0]}</p>}
                       <div className="flex flex-wrap items-center">
                         <Button
-                          type="submit"
-                          form={formId}
+                          type="button"
                           size="xs"
                           variant="success"
-                          disabled={form.isSubmitting || form.isDirty === false}
+                          disabled={form.isSubmitting || isSaving || form.isDirty === false}
                           aria-label="Confirm new rate"
+                          onClick={() => void submitConfirmedRate()}
                         >
-                          {form.isSubmitting && <Loader2Icon className="size-3 animate-spin" />}
+                          {isSaving && <Loader2Icon className="size-3 animate-spin" />}
                           Confirm
                         </Button>
                         <Button
                           type="button"
                           size="xs"
                           variant="ghost"
-                          disabled={form.isSubmitting}
+                          disabled={form.isSubmitting || isSaving}
                           onClick={onSettled}
                           aria-label="Discard changes"
                           className="ml-2"
@@ -343,6 +348,7 @@ export function RateAmount(props: {
 function RateDismissButton(props: {
   rate: RouterOutputs['paymentCategories']['forEmployee'][number];
   replacementAmount?: number;
+  onDismissRate?: any;
 }) {
   const [open, setOpen] = useState(false);
   const trpc = useTRPC();
@@ -400,7 +406,14 @@ function RateDismissButton(props: {
             aria-label="Confirm revert"
             className="flex-1"
             onClick={async () => {
-              await dismissRate.mutateAsync({ rateId: props.rate.id });
+              if (props.onDismissRate) {
+                await props.onDismissRate({ rateId: props.rate.id });
+                await queryClient.invalidateQueries(trpc.paymentCategories.forEmployee.queryFilter());
+                await queryClient.invalidateQueries(trpc.employees.payslips.list.queryFilter());
+                await queryClient.invalidateQueries(trpc.employees.payslips.get.queryFilter());
+              } else {
+                await dismissRate.mutateAsync({ rateId: props.rate.id });
+              }
               setOpen(false);
             }}
           >

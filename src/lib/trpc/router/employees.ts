@@ -72,12 +72,6 @@ export const employees = {
         const lineItems = [];
 
         for (const lineItem of input.lineItems) {
-          if (seenCategoryIds.has(lineItem.paymentCategoryId)) {
-            throw new TRPCError({
-              code: 'BAD_REQUEST',
-              message: 'Each payment category can only be added once',
-            });
-          }
           seenCategoryIds.add(lineItem.paymentCategoryId);
 
           const rate = findCurrentRateForCategory(employeeRates, lineItem.paymentCategoryId, input.paymentDate);

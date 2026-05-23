@@ -267,7 +267,7 @@ function PayslipTotalDisplay(props: {
   return props.differs ? (
     <div className="flex flex-col justify-end gap-0">
       <span className={cn('font-medium', props.compact && 'text-xs font-semibold')}>{viewTotal}</span>
-      <span className="text-[0.5rem] text-muted-foreground">({baseTotal})</span>
+      <span className="text-[0.5rem] text-muted-foreground">({baseTotal} at the time of creation)</span>
     </div>
   ) : (
     <span className={cn('font-medium', props.compact && 'text-xs font-semibold')}>{viewTotal}</span>
@@ -346,16 +346,16 @@ function PayslipAdjustedValue(props: {
 }) {
   const suffix = props.suffix ?? '';
   return (
-    <span className="inline-flex items-baseline justify-end gap-1.5">
-      <span className="text-[0.625rem] text-muted-foreground">
-        OG {props.paymentValue}
-        {suffix}
-      </span>
+    <div className="flex flex-col justify-end gap-0">
       <span className={cn(props.valueClass)}>
         {props.viewValue}
         {suffix}
       </span>
-    </span>
+      <span className="text-[0.5rem] text-muted-foreground">
+        ({props.paymentValue}
+        {suffix} at the time of creation)
+      </span>
+    </div>
   );
 }
 

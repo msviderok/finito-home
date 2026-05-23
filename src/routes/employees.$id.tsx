@@ -70,8 +70,8 @@ function RouteComponent() {
         <h2 className="text-md font-semibold tracking-tight">Payroll details</h2>
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto lg:max-h-[calc(100svh-var(--header-height)-12rem)]">
-        <PaymentCategoriesSection employeeId={employee.data.id} onCreateRate={createRate.mutate} />
-        <PayslipsSection employeeId={employee.data.id} onCreatePayslip={createPayslip.mutate} />
+        <PaymentCategoriesSection employeeId={employee.data.id} onCreateRate={createRate.mutateAsync} />
+        <PayslipsSection employeeId={employee.data.id} onCreatePayslip={createPayslip.mutateAsync} />
       </div>
     </div>
   );
